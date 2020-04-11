@@ -8,7 +8,7 @@ new fullpage('#fullpage', {
     //callbacks
     onLeave: function(origin, destination, direction) {
         // enter first page: make all UI-elements disappear
-        if (destination.index == 0) {
+        if (destination.index == 0 && !shared.footerIsOpen()) {
             // topNavToggle
             $(shared.TOP_NAV_TOGGLE_DIV_SEL)[0].style.opacity = '0';
             $(shared.TOP_NAV_TOGGLE_DIV_SEL)[0].style.display = 'none';
@@ -21,12 +21,16 @@ new fullpage('#fullpage', {
             shared.headerToggle(true, true);
         }
         // change UI elements color on slide sparring arrive
-        if (destination.index == 4) {
+        if (destination.index == 4 && !shared.footerIsOpen()) {
             shared.whiteNavToggle();
         }
         // change UI elements color on slide sparring leave
-        if (origin.index == 4) {
+        if (origin.index == 4 && !shared.footerIsOpen()) {
             shared.whiteNavToggle();
+        }
+        // disable fullpage scrolling when either kontakt, impressum or datenschutz is open
+        if (shared.footerIsOpen()) {
+			return false;
         }
     },
     afterLoad: function(origin, destination, direction) {

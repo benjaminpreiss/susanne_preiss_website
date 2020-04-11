@@ -40,6 +40,13 @@
     }
 }
 
+.datenschutz-open {
+    .bottomNavToggles {
+        background-color: vars.$footer-color;
+        transition: background-color ease vars.$hide-bottom-nav;
+    }
+}
+
 .kont-open, .impressum-open, .datenschutz-open {
     .bottomNavToggles {
         z-index: 2;

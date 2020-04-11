@@ -25,6 +25,10 @@
         transform: translate(-300%, 0px);
         transition: all vars.$content-open-dur ease;
     }
+    .navBarBackground {
+        transform: translate(-100%, 0px);
+        transition: all vars.$content-open-dur ease;
+    }
 }
 .topNavToggle {
     transition: transform vars.$hide-header-toggler ease;

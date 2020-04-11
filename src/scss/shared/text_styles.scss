@@ -72,7 +72,7 @@ h6 {
         display: inline;
     }
 }
-p {
+p, ul {
     font-family: 'Open Sans', sans-serif;
     @include font-size(14px);
     line-height: 1.6em;

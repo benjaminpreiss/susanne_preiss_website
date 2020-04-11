@@ -49,7 +49,7 @@ $rfs-two-dimensional: true;
         .kontakt, .schliessen {
             button {
                 border-bottom: solid black 0.8px;
-                height: 30px;
+                height: vars.$bottomNav-button-height;
             }
         }
     & > 

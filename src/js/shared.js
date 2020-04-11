@@ -49,14 +49,12 @@ export function addSharedEventListeners(STARTPAGE) {
     $(OPEN_IMPRESSUM_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
         $(OPEN_IMPRESSUM_TOGGLE_SEL)[0].style.outline = '0';
     });
-    /*
     $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].addEventListener('click', () => {
         datenschutzToggle();
     });
     $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
         $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].style.outline = '0';
     });
-    */
     $(CLOSE_BOTTOMNAV_TOGGLE_SEL)[0].addEventListener('click', () => {
         schliessenToggle(STARTPAGE);
     });
@@ -78,9 +76,9 @@ function schliessenToggle(STARTPAGE) {
         $(document.body).removeClass(CLASS_KONTAKT_OPEN);
     } else if (isOpen(CLASS_IMPRESSUM_OPEN)) {
         $(document.body).removeClass(CLASS_IMPRESSUM_OPEN);
-    }/* else if (isOpen(CLASS_DATENSCHUTZ_OPEN)) {
+    } else if (isOpen(CLASS_DATENSCHUTZ_OPEN)) {
         $(document.body).removeClass(CLASS_DATENSCHUTZ_OPEN);
-    }*/
+    }
 }
 
 function kontaktToggle(STARTPAGE) {
@@ -131,4 +129,8 @@ function elToggle(CLASS) {
 
 export function isOpen(CLASS) {
     return $(document.body).hasClass(CLASS);
+}
+
+export function footerIsOpen() {
+    return isOpen(CLASS_KONTAKT_OPEN) || isOpen(CLASS_IMPRESSUM_OPEN) || isOpen(CLASS_DATENSCHUTZ_OPEN);
 }
