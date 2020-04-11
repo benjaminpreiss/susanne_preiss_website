@@ -1,0 +1,116 @@
+
+@use '../shared/vars';
+@use '../shared/mixi';
+
+/* before interaction */
+
+.impressumPage {
+    opacity: 0;
+    z-index: -1;
+}
+
+.datenschutzPage {
+    opacity: 0;
+    z-index: -1;
+}
+
+.bottomNavToggles {
+    transition: transform vars.$hide-bottom-nav ease;
+    & > 
+        div.kontakt, div.impressum, div.datenschutz {
+        transition: transform vars.$hide-bottom-nav ease;
+    }
+    & > div.schliessen {
+        transition: opacity vars.$hide-cont-button-dur ease;
+        opacity: 0;
+        z-index: -1;
+    }
+}
+
+.cont-form {
+    opacity: 0;
+    z-index: -1;
+}
+
+/* after interaction */
+
+.head-open {
+    .bottomNavToggles {
+        transform: translate(0px, 300%);
+    }
+}
+
+.kont-open, .impressum-open, .datenschutz-open {
+    .bottomNavToggles {
+        z-index: 2;
+        transition: transform vars.$hide-bottom-nav ease;
+        & > 
+            div.impressum, div.datenschutz {
+                transform: translate(0px, 500%);
+        }
+        & > div.kontakt {
+                transform: translate(0, 200%);
+                transition: transform vars.$hide-cont-button-dur ease;
+        }
+        & > div.schliessen {
+            opacity: 1;
+            transition: opacity vars.$hide-cont-button-dur ease vars.$hide-cont-button-del;
+        }
+            
+    }
+}
+
+.kont-open {
+    .cont-form {
+        transition: opacity vars.$hide-cont-form-dur ease vars.$hide-cont-form-del;
+        z-index: 1;
+        opacity: 1;
+    }
+}
+
+.impressum-open {
+    .impressumPage {
+        transition: opacity vars.$hide-cont-form-dur ease vars.$hide-cont-form-del;
+        z-index: 1;
+        opacity: 1;
+    }
+}
+
+.datenschutz-open {
+    .datenschutzPage {
+        transition: opacity vars.$hide-cont-form-dur ease vars.$hide-cont-form-del;
+        z-index: 1;
+        opacity: 1;
+    }
+}
+
+.nav-white {
+    .kontakt.open {
+        border-bottom: vars.$bottom-nav-button-border-white;
+    }
+    .bottomNavToggles {
+        .impressum.datenschutz {
+            button {
+                color: vars.$nav-el-color-white;
+            }
+        }
+        button.kontakt {
+            color: vars.$nav-el-color-white;
+        }
+    }
+    &.nav-open .kontakt.open {
+        border-bottom: vars.$bottom-nav-button-border;
+    }
+    &.nav-open {
+        .bottomNavToggles {
+            .impressum.datenschutz {
+                button {
+                    color: vars.$nav-el-color;
+                }
+            }
+            button.kontakt {
+                color: vars.$nav-el-color;
+            }
+        }
+    }
+}

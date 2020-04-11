@@ -1,0 +1,6 @@
+@use 'vars';
+@use 'mixi';
+
+footer {
+    background: vars.$footer-color;
+}

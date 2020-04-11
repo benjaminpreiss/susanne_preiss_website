@@ -1,0 +1,141 @@
+@use '../shared/vars';
+@use '../shared/mixi';
+@use '../dynamics/foot_dyn';
+
+@import "../../../node_modules/rfs/scss";
+$rfs-two-dimensional: true;
+
+
+/* bottomNav togglers */
+.bottomNavToggles {
+    @include mixi.navElemBottomPadding();
+    @include mixi.navElemRightPadding();
+    @include mixi.navElemTopPadding();
+    @include mixi.navElemLeftPadding();
+    font-family: 'Roboto', sans-serif;
+    color: black;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 1;
+    .impressum.datenschutz {
+        margin: 0 2rem 0 0;
+        display: block;
+        border: none;
+        button {
+            font-size: 10px;
+            padding: 0 13px;
+            background: rgba(0, 0, 0, 0);
+            color: black;
+        }
+    }
+    & > .schliessen {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+    }
+    > div {
+        align-self: center;
+        > div {
+            display: inline-block;
+            height: 100%;
+        }
+    }
+    & > 
+        .kontakt, .schliessen {
+            button {
+                border-bottom: solid black 0.8px;
+                height: 30px;
+            }
+        }
+    & > 
+        .schliessen {
+            & > button {
+                @include mixi.navElemBottomMargin();
+                @include mixi.navElemRightMargin();
+            }
+        }
+}
+footer {
+    z-index: 1;
+}
+
+
+/* imprint page */
+.impressumPage {
+    p {
+        // define text-align for non-span-lines:
+        text-align: center;
+        // text-align-last: justify to give control to span-css-rules
+        text-align-last: center;
+        & > span {
+            // make sure that each span element is a line break: (Otherwise: display: inline;)
+            display: block;
+            // define text-align for span-lines:
+            text-align-last: center;
+        }
+    }
+}
+
+/* kontakt form */
+.cont-form {
+    // normally: @include margin-top(220px);
+    // normally: @include margin-left(220px);
+    // normally: @include margin-right(220px);
+    // normally: @include margin-bottom(0);
+    position: fixed;
+    right: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    // temporary contact form:
+    align-items: center;
+    p {
+        @include font-size(20px);
+        text-align: center;
+    }
+    // normally: align-items: flex-start;
+    form {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        input, textarea {
+            font-family: 'Roboto', sans-serif;
+            @include font-size(0.7rem);
+            @include mixi.resetFormElems();
+            border-bottom: solid black 0.8px;
+            margin: 0.5em 0 0 0;
+            padding: 0.7em 0;
+            &::placeholder {
+                color: #333;
+            }
+        }
+        textarea {
+            flex: 1 1;
+            resize: none;
+        }
+        button {
+            align-self: center;
+            border: none;
+            @include margin-top(200px);
+            @include mixi.navElemBottomMargin();
+            border-bottom: solid black 0.8px;
+        }
+    }
+}
+
+@media (max-aspect-ratio: 1/1) {
+    .bottomNavToggles {
+        justify-content: space-between;
+    }
+}

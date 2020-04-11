@@ -1,0 +1,13 @@
+/* anchor colors */
+@use '../shared/anchor_colors';
+/* button reset */
+@use 'button_reset';
+
+/* header */
+@use 'header';
+/* footer */
+@use 'footer';
+
+
+/* nav animations */
+@use '../dynamics/fp-nav_dyn.scss';

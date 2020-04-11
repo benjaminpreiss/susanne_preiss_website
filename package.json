@@ -1,0 +1,41 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "private": true,
+  "browserslist": [
+    "last 4 versions"
+  ],
+  "dependencies": {
+    "fullpage.js": "^3.0.8",
+    "gsap": "^3.2.3",
+    "jquery": "^3.4.1",
+    "rfs": "^9.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
+    "autoprefixer": "^9.7.5",
+    "babel-loader": "^8.1.0",
+    "copy-webpack-plugin": "^5.1.1",
+    "css-loader": "^3.4.2",
+    "extract-loader": "^5.0.1",
+    "file-loader": "^6.0.0",
+    "html-loader": "^1.1.0",
+    "html-webpack-plugin": "^4.0.4",
+    "image-webpack-loader": "^6.0.0",
+    "json-loader": "^0.5.7",
+    "mini-css-extract-plugin": "^0.9.0",
+    "postcss-loader": "^3.0.0",
+    "sass": "^1.26.3",
+    "sass-loader": "^8.0.2",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.11"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack --config ./webpack.config.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

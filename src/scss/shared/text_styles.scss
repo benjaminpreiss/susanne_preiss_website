@@ -1,0 +1,113 @@
+@import "../../../node_modules/rfs/scss";
+$rfs-two-dimensional: true;
+
+h3, h2, h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    line-height: 0.85em;
+}
+h1 {
+    @include font-size(118px);
+    align-self: flex-start;
+    width: 85%;
+    text-align: center;
+    margin: 0;
+}
+h2 {
+    @include font-size(73px);
+    @include margin-top(0px);
+    @include margin-right(40px);
+    @include margin-bottom(0px);
+    @include margin-left(40px);
+}
+h3 {
+    @include font-size(50px);
+    @include margin-top(40px);
+    @include margin-right(40px);
+    @include margin-bottom(0px);
+    @include margin-left(40px);
+    svg {
+        height: 0.5em;
+    }
+}
+#aktuellOnlineTraining a {
+    color: #ff0000;
+}
+#susannePreissCoaching {
+    margin-bottom: 0;
+}
+h4 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    @include font-size(40px);
+    @include margin-top(80px);
+    @include margin-bottom(30px);
+    @include padding-left(60px);
+    @include padding-right(60px);
+}
+h5 {
+    font-family: 'Open Sans', sans-serif;
+    @include font-size(18px);
+    line-height: 1.6em;
+    @include margin-top(0px);
+    @include margin-bottom(20px);
+    @include padding-left(60px);
+    @include padding-right(60px);
+    & > span {
+        display: block;
+    }
+}
+h6 {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 600;
+    @include font-size(14px);
+    line-height: 1.6em;
+    @include margin-top(0px);
+    @include margin-bottom(20px);
+    @include padding-left(60px);
+    @include padding-right(60px);
+    & > span {
+        display: inline;
+    }
+}
+p {
+    font-family: 'Open Sans', sans-serif;
+    @include font-size(14px);
+    line-height: 1.6em;
+    @include margin-top(0px);
+    @include margin-bottom(20px);
+    @include padding-left(60px);
+    @include padding-right(60px);
+    & > span {
+        display: inline;
+    }
+    svg {
+        height: 0.7em;
+    }
+    &.semi-bold {
+        font-weight: 600;
+    }
+}
+button .text {
+    @include font-size(14px);
+    text-align: center;
+    color: black;
+    font-family: 'Roboto', sans-serif;
+}
+
+.content {
+    & > .text {
+        @include padding-left(50px);
+        @include padding-right(50px);
+        max-width: 1000px;
+    }
+    h4, p {
+        @include padding-left(10px);
+        @include padding-right(10px);
+    }
+}
+.redAnchor {
+    color: #ff0000;
+}

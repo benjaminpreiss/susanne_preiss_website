@@ -1,0 +1,35 @@
+@import "../../../node_modules/rfs/scss";
+
+@mixin resetFormElems() {
+    display: block;
+    border: none;
+    background: transparent;
+    text-decoration: none;
+    cursor: pointer;
+    appearance: none;
+}
+@mixin navElemBottomMargin() {
+    @include margin-bottom(20px);
+}
+@mixin navElemRightMargin() {
+    @include margin-right(24px);
+}
+@mixin navElemTopMargin() {
+    @include margin-top(20px);
+}
+@mixin navElemLeftMargin() {
+    @include margin-left(24px);
+}
+
+@mixin navElemBottomPadding() {
+    @include padding-bottom(20px);
+}
+@mixin navElemRightPadding() {
+    @include padding-right(24px);
+}
+@mixin navElemTopPadding() {
+    @include padding-top(20px);
+}
+@mixin navElemLeftPadding() {
+    @include padding-left(24px);
+}

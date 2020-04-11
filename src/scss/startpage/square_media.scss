@@ -1,0 +1,73 @@
+@use '../shared/mixi';
+
+@media (max-aspect-ratio: 1/1) {
+    .greatness .scrollHint {
+        width: 100%;
+    }
+    
+    .greatness .logo {
+        width: 100%;
+    }
+
+    .background-full {
+        flex: 1 0 50%;
+    }
+
+    .greatness .content {
+        flex: 1 0;
+    }
+
+    .l-image-left, .l-image-right, .l-image-full {
+        &.slideContent {
+            flex-direction: column;
+        }
+    }
+
+    .nav-open {
+        .l-image-left, .l-image-right {
+            transform: translate(0px, -100%);
+            .background, .content {
+                transform: none;
+            }
+        }
+    }
+    
+    .bottomNavToggles a, .bottomNavToggles button {
+        color: black !important;
+    }
+    
+    button.kontakt {
+        border-bottom: solid black 0.8px !important;
+    }
+
+    #fp-nav ul li a span {
+        background: #333 !important;
+    }
+
+    .fp-right {
+        display: none;
+    }
+
+    .workshops .background {
+        background: url(../../img/susanne_preiss_web_head_01.jpg) no-repeat center center;
+        background-size: cover;
+    }
+
+    .greatness{
+        .scrollHint {
+            display: none;
+        }
+    }
+
+    .speaker .background {
+        flex: 0 1 auto;
+        min-height: 50%;
+    }
+
+    .greatness .background-full img {
+        object-position: center top;
+    }
+    #findYourGreatness {
+        display: none;
+    }
+}

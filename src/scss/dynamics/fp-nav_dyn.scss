@@ -1,0 +1,19 @@
+
+@use '../shared/vars';
+@use '../shared/mixi';
+
+#fp-nav {
+    transition: transform vars.$hide-fp-nav ease;
+}
+.nav-open #fp-nav {
+    transform: translate(300%, 0px);
+}
+
+.nav-white {
+    #fp-nav ul li a span {
+        background: vars.$header-color;
+    }
+    &.nav-open #fp-nav ul li a span {
+        background: vars.$fpnav-el-color;
+    }
+}

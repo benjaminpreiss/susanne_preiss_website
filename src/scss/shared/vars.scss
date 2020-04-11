@@ -1,0 +1,24 @@
+$header-height: 7%;
+$background-color: #efeae3;
+$footer-color: #efeae3;
+$header-color: #efeae3;
+$fpnav-el-color: #333;
+$nav-el-color: black;
+$nav-el-color-white: $background-color;
+$bottom-nav-button-border: solid black 0.8px;
+$bottom-nav-button-border-white: solid #efeae3 0.8px;
+$footer-height: 10%;
+
+$nav-open-backg: 0.5s;
+$nav-open-cont: 0.7s;
+$nav-open: 0.5s;
+$header-text: 0.5s;
+$hide-header-toggler: 0.5s;
+$hide-bottom-nav: 0.5s;
+$hide-fp-nav: 0.5s;
+$hide-cont-button-dur: $nav-open-cont / 2;
+$hide-cont-button-del: $nav-open-cont / 2;
+$hide-cont-form-dur: 0.3s;
+$hide-cont-form-del: $nav-open-cont - $hide-cont-form-dur;
+$content-open-dur: $nav-open / 2;
+$content-open-del: $nav-open / 2;

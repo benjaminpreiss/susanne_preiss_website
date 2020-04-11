@@ -1,0 +1,20 @@
+/* reset page margin and padding */
+@use '../shared/body_reset';
+/* set text styles and sizes */
+@use '../shared/text_styles';
+/* color body */
+@use '../shared/color_body.scss';
+
+/* style nav */
+@use '../shared/nav_contentpages';
+
+/* style imprint page */
+@use '../shared/imprint';
+/* color footer */
+@use '../shared/color_footer';
+
+/* style imgs */
+@use '../shared/img';
+
+/* fill content */
+@use 'workshops_content.scss';

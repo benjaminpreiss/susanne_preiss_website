@@ -1,0 +1,79 @@
+@use '../shared/vars';
+@use '../shared/mixi';
+
+.background, .background-full, .content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.slideContent {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: stretch;
+    transition: transform vars.$nav-open ease;
+}
+.l-image-right {
+    flex-direction: row-reverse;
+}
+.l-image-left {
+    flex-direction: row;
+}
+.kont-open, .impressum-open, .datenschutz-open {
+    .l-image-left {
+        transform: translate(-100%, 0px);
+    }
+    .l-image-right {
+        transform: translate(0px, -100%);
+    }
+}
+.head-open {
+    .l-image-left {
+        .content {
+            transform: translate(+100%, 0px);
+        }
+        .background {
+            transform: translate(-100%, 0px);
+        }
+    }
+    .l-image-right {
+        .content {
+            transform: translate(-100%, 0px);
+        }
+        .background {
+            transform: translate(+100%, 0px);
+        }
+    }
+}
+.content {
+    position: relative;
+    flex: 1 0 50%;
+    transition: all vars.$nav-open-cont ease;
+}
+.background {
+    flex: 0 1 50%;
+    min-height: fit-content;
+    overflow: hidden;
+    transition: all vars.$nav-open-backg ease;
+    img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        object-position: center center;
+    }
+}
+.background-full {
+    overflow: hidden;
+    transition: all vars.$nav-open-backg ease;
+    img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        object-position: center center;
+    }
+}
+
+.nav-open .background {
+    opacity: 0;
+}

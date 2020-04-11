@@ -1,0 +1,11 @@
+@import "../../../node_modules/rfs/scss";
+$rfs-two-dimensional: true;
+
+.img {
+    box-sizing: border-box;
+    width: 100%;
+    //@include padding-left(100px);
+    //@include padding-right(100px);
+    @include padding-top(0);
+    @include padding-bottom(30px);
+}

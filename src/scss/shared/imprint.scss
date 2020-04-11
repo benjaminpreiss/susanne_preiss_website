@@ -1,0 +1,17 @@
+@use '../shared/vars';
+@use '../shared/mixi';
+@use '../dynamics/head_dyn.scss';
+@import "../../../node_modules/rfs/scss";
+$rfs-two-dimensional: true;
+
+.impressumPage {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

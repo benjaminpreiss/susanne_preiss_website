@@ -1,0 +1,34 @@
+/* reset page margin and padding */
+@use '../shared/body_reset';
+/* set text styles and sizes */
+@use '../shared/text_styles';
+
+/* style imprint page */
+@use '../shared/imprint';
+
+/* style nav */
+@use '../shared/nav.scss';
+/* hide topNavToggle */
+@use '../shared/hide_topNavToggle';
+/* hide bottomNavToggles */
+@use '../shared/hide_bottomNavToggles.scss';
+
+/* tiles */
+@use '../startpage/tiles_styles';
+/* greatness tile */
+@use '../startpage/greatness_tile';
+/* remaining tiles */
+@use '../startpage/other_tiles';
+
+
+/* narrow media */
+@use '../startpage/narrow_media';
+/* media higher than wide */
+@use '../startpage/square_media';
+
+/* scaling links */
+@use '../startpage/scaling_links.scss';
+
+.navBarBackground {
+    background: none;
+}
