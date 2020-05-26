@@ -1,0 +1,11 @@
+// standardx configuration tweak for compat plugin
+{
+    "extends": ["plugin:compat/recommended"],
+    "env": {
+        "browser": true,
+        "es6": true
+    },
+    "parserOptions": {
+        "sourceType": "module"
+    }
+}
