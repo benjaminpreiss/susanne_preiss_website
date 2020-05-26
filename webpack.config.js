@@ -4,8 +4,11 @@ const autoprefixer = require('autoprefixer');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const jsonImporter = require('node-sass-json-importer');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
+  target: 'web',
   entry: {
     index: ['./src/scss/startpage/index.scss', './src/js/index.js', './node_modules/fullpage.js/dist/fullpage.css'],
     workshops: ['./src/scss/workshops/workshops.scss', './src/js/workshops.js'],
@@ -24,6 +27,8 @@ module.exports = {
     filename: 'js/[name].bundle.js'
   },
   plugins: [
+    // clean dist folder before building
+    new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     // extracting css files to files from css-loader
     new MiniCssExtractPlugin({
       // this defines the folder where the file should be saved.
@@ -84,10 +89,13 @@ module.exports = {
     }),
   ],
   devtool: 'source-map',
+  devServer: {
+    contentBase: path.resolve('./dist'),
+  },
   module: {
     rules: [ 
       { // copying index.html to dist and urlrewriting (img tag only)
-        test: /index\.html$/,
+        test: /\.html$/,
         use: [
             {
               loader: "html-loader",
@@ -146,7 +154,12 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               sourceMap: true,
-              implementation: require("sass")
+              implementation: require("sass"),
+              sassOptions: {
+                importer: jsonImporter({
+                  convertCase: true
+                }),
+              }
             }
           }
         ],
@@ -166,17 +179,19 @@ module.exports = {
           {
             loader: 'image-webpack-loader',
             options: {
+              disable: true,
               mozjpeg: {
                 progressive: true,
                 quality: 65
               },
               // optipng.enabled: false will disable optipng
               optipng: {
-                enabled: false,
+                enabled: true,
               },
               pngquant: {
                 quality: [0.65, 0.90],
-                speed: 4
+                speed: 4,
+                enabled: true
               },
               gifsicle: {
                 interlaced: false,
@@ -201,6 +216,7 @@ module.exports = {
       },
       {
         test: /\.svg$/i,
+        exclude: /font\/\S*\.svg((\?)?#\S*)?$/i,
         use: (info) => ([
           {
             loader: 'file-loader',
@@ -214,6 +230,16 @@ module.exports = {
         ]),
       },
       {
+        test: /font\/\S*\.(woff(2)?|ttf|eot|svg)((\?)?#\S*)?$/i,
+        use: {
+          loader: 'file-loader',
+          options: {
+            outputPath: 'font',
+            publicPath: '../font/',
+          }
+        }
+      },
+      {
           test: /\.js$/,
           exclude: /node_modules/,
           use: "babel-loader"
@@ -225,6 +251,7 @@ module.exports = {
     alias: {
       img: path.resolve(__dirname, 'src', 'img'),
       svg: path.resolve(__dirname, 'src', 'svg'),
+      font: path.resolve(__dirname, 'src', 'font')
   }
   }
 };
