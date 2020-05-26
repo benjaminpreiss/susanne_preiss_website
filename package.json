@@ -7,7 +7,8 @@
     "gsap": "^3.2.3",
     "jquery": "^3.4.1",
     "node-sass": "^4.14.1",
-    "rfs": "^9.0.2"
+    "rfs": "^9.0.2",
+    "videojs": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

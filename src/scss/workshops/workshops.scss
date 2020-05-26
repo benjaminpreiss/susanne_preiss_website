@@ -1,7 +1,9 @@
 /* reset page margin and padding */
 @use '../shared/body_reset';
+
 /* set text styles and sizes */
 @use '../shared/text_styles';
+
 /* color body */
 @use '../shared/color_body.scss';
 
@@ -10,6 +12,7 @@
 
 /* style imprint page */
 @use '../shared/imprint';
+
 /* style datenschutz page */
 @use '../shared/datenschutz';
 

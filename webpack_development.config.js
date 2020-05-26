@@ -201,7 +201,7 @@ module.exports = {
         ]),
       },
       { // video loader for index.html
-        test: /\.webm$/i,
+        test: /\.(webm|mp4)$/i,
         use: (info) => ([
           {
             loader: 'file-loader',
