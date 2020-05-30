@@ -1,0 +1,111 @@
+.m-half-cover-left,
+.m-half-cover-right,
+.m-half-cover-right-transparent,
+.m-half-cover-left-transparent {
+    transition:
+        opacity 0.2s ease-in-out,
+        transform 0.2s ease-in-out;
+}
+
+.m-half-cover-left {
+    align-items: center;
+    background: #efeae3;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    left: 0;
+    opacity: 0.9;
+    position: absolute;
+    right: 50%;
+    top: 0;
+
+    @media (max-aspect-ratio: 1/1) {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 50%;
+    }
+}
+
+.m-half-cover-right {
+    align-items: center;
+    background: #efeae3;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    left: 50%;
+    opacity: 0.9;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    @media (max-aspect-ratio: 1/1) {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 50%;
+    }
+}
+
+.m-half-cover-right-transparent {
+    align-items: center;
+    background: none;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    left: 50%;
+    position: absolute;
+    right: 0;
+    top: 0;
+
+    @media (max-aspect-ratio: 1/1) {
+        bottom: 50%;
+        left: 0;
+        right: 0;
+        top: 0;
+    }
+}
+
+.m-half-cover-left-transparent {
+    align-items: center;
+    background: none;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    right: 50%;
+    top: 0;
+
+    @media (max-aspect-ratio: 1/1) {
+        bottom: 50%;
+        left: 0;
+        right: 0;
+        top: 0;
+    }
+}
+
+.mouse-enter {
+    .m-half-cover-right,
+    .m-half-cover-left,
+    .m-half-cover-right-transparent,
+    .m-half-cover-left-transparent {
+        opacity: 0.8;
+    }
+}
+
+.video-start {
+    .m-half-cover-right,
+    .m-half-cover-right-transparent {
+        transform: translate(100%, 0);
+    }
+
+    .m-half-cover-left,
+    .m-half-cover-left-transparent {
+        transform: translate(-100%, 0);
+    }
+}

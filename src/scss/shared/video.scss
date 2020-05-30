@@ -1,0 +1,23 @@
+.m-video-container {
+    height: 80vmin;
+    overflow: hidden;
+    position: relative;
+}
+
+.m-video {
+    height: 100%;
+
+    @media (max-aspect-ratio: 1/1) {
+        height: 100%;
+    }
+}
+
+.video-js {
+    height: 100%;
+    width: 100%;
+}
+
+.vjs-poster {
+    background-position: center center !important;
+    background-size: cover !important;
+}

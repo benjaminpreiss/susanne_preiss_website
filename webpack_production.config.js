@@ -109,6 +109,11 @@ module.exports = {
                         type: 'srcset',
                       },
                       {
+                        tag: 'video',
+                        attribute: 'poster',
+                        type: 'src',
+                      },
+                      {
                         tag: 'source',
                         attribute: 'src',
                         type: 'src',
@@ -197,7 +202,7 @@ module.exports = {
         ]),
       },
       { // video loader for index.html
-        test: /\.webm$/i,
+        test: /\.(webm|mp4)$/i,
         use: (info) => ([
           {
             loader: 'file-loader',

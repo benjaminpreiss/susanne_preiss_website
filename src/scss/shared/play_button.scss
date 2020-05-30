@@ -1,0 +1,13 @@
+.m-play-button {
+    background: url('~svg/video_play_button_light.svg') no-repeat center center;
+    background-size: contain;
+    height: 10%;
+    transition: transform 0.2s ease-in-out;
+    width: 10%;
+}
+
+.mouse-enter {
+    .m-play-button {
+        transform: scale(1.1);
+    }
+}

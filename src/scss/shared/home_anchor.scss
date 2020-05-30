@@ -11,7 +11,7 @@ $rfs-two-dimensional: true;
         display: block;
         width: 13px;
         height: 24px;
-        background: url(../../svg/SP_Website_Pfeil.svg) no-repeat center center;
+        background: url('~svg/SP_Website_Pfeil.svg') no-repeat center center;
         background-size: contain;
         margin: 0;
         padding: 0;
@@ -21,5 +21,17 @@ $rfs-two-dimensional: true;
             width: 15px;
             height: 28px;
         }
+    }
+}
+
+.black-hl .homeAnchor {
+    a {
+        background: url('~svg/SP_Website_Pfeil.svg') no-repeat center center;
+    }
+}
+
+.white-hl .homeAnchor {
+    a {
+        background: url('~svg/SP_Website_Pfeil_white.svg') no-repeat center center;
     }
 }

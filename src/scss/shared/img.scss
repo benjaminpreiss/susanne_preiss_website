@@ -9,3 +9,45 @@ $rfs-two-dimensional: true;
     @include padding-top(0);
     @include padding-bottom(30px);
 }
+
+.m-image-container-full {
+    height: 60vh;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+
+    .m-scroll-hint {
+        width: 100%;
+        height: 20px;
+        position: absolute;
+        bottom: 40px;
+        right: 0;
+        background: url(~svg/susanne_preiss_web_arrow_01.svg) no-repeat center center;
+        background-size: contain;
+    }
+}
+
+.m-image-container {
+    height: 80vmin;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+
+.m-image {
+    height: 100%;
+    width: 100%;
+
+    &.workshops-start {
+        background: url('~img/workshops_start.jpg') no-repeat center center;
+        background-size: cover;
+    }
+    &.workshops-steinhude {
+        background: url('~img/steinhuder_meer.JPG') no-repeat center center;
+        background-size: cover;
+    }
+    &.workshops-vigilius {
+        background: url('~img/vigilius_2.jpg') no-repeat center center;
+        background-size: cover;
+    }
+}

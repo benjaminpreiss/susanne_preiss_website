@@ -11,7 +11,7 @@ module.exports = {
   target: 'web',
   entry: {
     index: ['./src/scss/startpage/index.scss', './src/js/index.js', './node_modules/fullpage.js/dist/fullpage.css'],
-    workshops: ['./src/scss/workshops/workshops.scss', './src/js/workshops.js'],
+    workshops: ['./src/scss/workshops/workshops.scss', './src/js/workshops.js', './node_modules/video.js/dist/video-js.css'],
     online: ['./src/scss/online/online.scss', './src/js/online.js'],
     personal: ['./src/scss/personal/personal.scss', './src/js/personal.js'],
     business: ['./src/scss/business/business.scss', './src/js/business.js'],
@@ -111,6 +111,11 @@ module.exports = {
                         tag: 'img',
                         attribute: 'srcset',
                         type: 'srcset',
+                      },
+                      {
+                        tag: 'video',
+                        attribute: 'poster',
+                        type: 'src',
                       },
                       {
                         tag: 'source',

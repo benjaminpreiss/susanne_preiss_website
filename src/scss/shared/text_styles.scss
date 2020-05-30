@@ -31,21 +31,25 @@ h3 {
         height: 0.5em;
     }
 }
+
 #aktuellOnlineTraining a {
     color: #ff0000;
 }
+
 #susannePreissCoaching {
     margin-bottom: 0;
 }
+
 h4 {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 300;
-    font-style: italic;
     @include font-size(40px);
     @include margin-top(80px);
     @include margin-bottom(30px);
     @include padding-left(60px);
     @include padding-right(60px);
+
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
 }
 h5 {
     font-family: 'Open Sans', sans-serif;
@@ -108,6 +112,41 @@ button .text {
         @include padding-right(10px);
     }
 }
+
 .redAnchor {
     color: #ff0000;
+}
+
+.m-half-cover-left,
+.m-half-cover-right {
+    h4 {
+        margin: 20px 0;
+        padding: 0;
+        text-align: center;
+    }
+
+    p {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+}
+
+.m-text-container,
+.m-heading-container {
+    margin: 0 auto;
+    max-width: 800px;
+    position: relative;
+    z-index: -1;
+}
+
+.m-heading-container {
+    h4 {
+        @include margin-top(80px);
+        @include margin-bottom(80px);
+    }
+}
+
+.m-text-container .text {
+    @include margin-bottom(100px);
 }

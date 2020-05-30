@@ -24,3 +24,10 @@
 
 /* fill content */
 @use 'workshops_content.scss';
+
+/* half cover */
+@use '../shared/half_cover.scss';
+
+/* video */
+@use '../shared/video.scss';
+@use '../shared/play_button.scss';

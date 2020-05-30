@@ -22,7 +22,7 @@ $rfs-two-dimensional: true;
     top: 0;
     right: 0;
     bottom: 0;
-    background: vars.$header-color;
+    background: none;
     z-index: -1;
 }
 
@@ -47,11 +47,11 @@ $rfs-two-dimensional: true;
         }
     }
     .bar {
+        background-color: #2B2C36;
         display: block;
         position: absolute;
         height: 10%;
         width: 100%;
-        background-color: #2B2C36;
         border-radius: 10%/100%;
     }
     .fst {
@@ -90,5 +90,18 @@ $rfs-two-dimensional: true;
         @include margin-left(20px);
         @include margin-right(20px);
         margin-bottom: 0.5rem;
+    }
+}
+
+
+.white-hr .topNavToggle {
+    .bar {
+        background-color: #efeae3;
+    }
+}
+
+.black-hr .topNavToggle {
+    .bar {
+        background-color: #2B2C36;
     }
 }
