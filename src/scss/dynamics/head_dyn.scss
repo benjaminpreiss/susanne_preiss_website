@@ -11,7 +11,7 @@
     z-index: 101;
 }
 .navBarBackground {
-    transition: all vars.$content-open-dur ease vars.$content-open-dur;
+    transition: transform vars.$content-open-dur ease vars.$content-open-dur;
 }
 .head-open .navBarBackground {
     transform: translate(-100%, 0px);
@@ -27,7 +27,7 @@
     }
     .navBarBackground {
         transform: translate(-100%, 0px);
-        transition: all vars.$content-open-dur ease;
+        transition: transform vars.$content-open-dur ease;
     }
 }
 .topNavToggle {

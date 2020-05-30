@@ -31,34 +31,34 @@ export var SECTION_NAV_SEL = '#fp-nav ul li a span';
 
 // add eventListeners
 export function addSharedEventListeners(STARTPAGE) {
-    $(TOP_NAV_TOGGLE_SEL)[0].addEventListener('click', () => {
+    $(TOP_NAV_TOGGLE_SEL).on('click', () => {
         headerToggle();
     });
-    $(TOP_NAV_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
+    $(TOP_NAV_TOGGLE_SEL).on('mousedown', () => {
         $(TOP_NAV_TOGGLE_SEL)[0].style.outline = '0';
     });
-    $(OPEN_KONTAKT_TOGGLE_SEL)[0].addEventListener('click', () => {
+    $(OPEN_KONTAKT_TOGGLE_SEL).on('click', () => {
         kontaktToggle();
     });
-    $(OPEN_KONTAKT_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
+    $(OPEN_KONTAKT_TOGGLE_SEL).on('mousedown', () => {
         $(OPEN_KONTAKT_TOGGLE_SEL)[0].style.outline = '0';
     });
-    $(OPEN_IMPRESSUM_TOGGLE_SEL)[0].addEventListener('click', () => {
+    $(OPEN_IMPRESSUM_TOGGLE_SEL).on('click', () => {
         impressumToggle();
     });
-    $(OPEN_IMPRESSUM_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
+    $(OPEN_IMPRESSUM_TOGGLE_SEL).on('mousedown', () => {
         $(OPEN_IMPRESSUM_TOGGLE_SEL)[0].style.outline = '0';
     });
-    $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].addEventListener('click', () => {
+    $(OPEN_DATENSCHUTZ_TOGGLE_SEL).on('click', () => {
         datenschutzToggle();
     });
-    $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
+    $(OPEN_DATENSCHUTZ_TOGGLE_SEL).on('mousedown', () => {
         $(OPEN_DATENSCHUTZ_TOGGLE_SEL)[0].style.outline = '0';
     });
-    $(CLOSE_BOTTOMNAV_TOGGLE_SEL)[0].addEventListener('click', () => {
+    $(CLOSE_BOTTOMNAV_TOGGLE_SEL).on('click', () => {
         schliessenToggle(STARTPAGE);
     });
-    $(CLOSE_BOTTOMNAV_TOGGLE_SEL)[0].addEventListener('mousedown', () => {
+    $(CLOSE_BOTTOMNAV_TOGGLE_SEL).on('mousedown', () => {
         $(CLOSE_BOTTOMNAV_TOGGLE_SEL)[0].style.outline = '0';
     });
 }

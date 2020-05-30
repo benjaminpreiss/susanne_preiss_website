@@ -1,0 +1,46 @@
+@use './mixi';
+@use './vars';
+@use './box_container.scss';
+
+/* reset page margin and padding */
+@use './body_reset';
+
+/* set text styles and sizes */
+@use './text_styles';
+
+/* color body */
+@use './color_body.scss';
+
+/* style nav */
+@use './nav_contentpages';
+
+/* style imprint page */
+@use './imprint';
+
+/* style datenschutz page */
+@use './datenschutz';
+
+/* color footer */
+@use './color_footer';
+
+/* style imgs */
+@use './img';
+
+/* half cover */
+@use './half_cover.scss';
+
+/* video */
+@use './video.scss';
+@use './play_button.scss';
+
+.content {
+    opacity: 1;
+    padding-bottom: 70px;
+    transition: all vars.$content-open-dur ease vars.$content-open-dur;
+}
+
+.nav-open .content {
+    opacity: 0;
+    transform: translate(-100%, 0);
+    transition: all vars.$content-open-dur ease;
+}
