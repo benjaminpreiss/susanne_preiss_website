@@ -1,3 +1,5 @@
 node_modules
 dist
 src/json/passwords.json
+src/vid
+.git.bfg-report
