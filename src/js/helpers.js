@@ -5,7 +5,9 @@ let footerCount = 0;
 
 export function addFooterClass( className ) {
     if ( $( '.bottomNavToggles' ).hasClass( className ) ) {
-        footerCount++;
+        if (footerCount === 0) {
+            footerCount++;
+        }
     } else {
         $( '.bottomNavToggles' ).addClass( className );
     }
@@ -13,8 +15,12 @@ export function addFooterClass( className ) {
 
 export function addHeaderClass( className ) {
     if ( $( '.navBar' ).hasClass( className ) ) {
-        headerCount++;
+        if ( headerCount === 0 ) {
+            headerCount++;
+            console.log(headerCount);
+        }
     } else {
+        console.log(className)
         $( '.navBar' ).addClass( className );
     }
 }

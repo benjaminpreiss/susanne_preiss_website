@@ -140,20 +140,32 @@ button .text {
 }
 
 .m-text-container,
-.m-heading-container {
-    margin: 0 auto;
+.m-heading-container,
+.m-heading-container-middle {
+    @include margin-bottom(80px);
+    @include margin-top(80px);
+
+    margin-left: auto;
+    margin-right: auto;
     max-width: 800px;
     position: relative;
     z-index: -1;
 }
 
-.m-heading-container {
+.m-heading-container,
+.m-heading-container-middle {
     h4 {
         @include margin-top(80px);
         @include margin-bottom(80px);
     }
+
+    .text {
+        @include margin-bottom(100px);
+    }
 }
 
-.m-text-container .text {
-    @include margin-bottom(100px);
+.m-heading-container-middle {
+    h4 {
+        text-align: center;
+    }
 }
