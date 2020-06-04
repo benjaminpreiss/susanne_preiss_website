@@ -106,6 +106,8 @@ $rfs-two-dimensional: true;
     }
 }
 
-.white-bg-hr .navBarBackground {
-    background: #efeae3;
+.white-bg-hr, .white-bg-hl {
+    .navBarBackground {
+        background: #efeae3;
+    }
 }

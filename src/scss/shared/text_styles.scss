@@ -115,8 +115,8 @@ button .text {
         max-width: 1000px;
     }
     h4, p {
-        @include padding-left(10px);
-        @include padding-right(10px);
+        @include padding-left(30px);
+        @include padding-right(30px);
     }
 }
 

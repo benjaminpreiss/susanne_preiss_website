@@ -24,14 +24,15 @@ $rfs-two-dimensional: true;
     }
 }
 
+.white-hl .homeAnchor {
+    a {
+        background: url('~svg/SP_Website_Pfeil_white.svg') no-repeat center center;
+    }
+}
+
 .black-hl .homeAnchor {
     a {
         background: url('~svg/SP_Website_Pfeil.svg') no-repeat center center;
     }
 }
 
-.white-hl .homeAnchor {
-    a {
-        background: url('~svg/SP_Website_Pfeil_white.svg') no-repeat center center;
-    }
-}

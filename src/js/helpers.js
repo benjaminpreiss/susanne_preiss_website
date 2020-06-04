@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-let headerCount = 0;
+let headerCount = {};
 let footerCount = 0;
 
 export function addFooterClass( className ) {
@@ -15,13 +15,16 @@ export function addFooterClass( className ) {
 
 export function addHeaderClass( className ) {
     if ( $( '.navBar' ).hasClass( className ) ) {
-        if ( headerCount === 0 ) {
-            headerCount++;
-            console.log(headerCount);
+        if ( headerCount[className] === undefined ) {
+            headerCount[className] = 0;
+        }
+        if ( headerCount[className] === 0 ) {
+            headerCount[className]++;
         }
     } else {
-        console.log(className)
+        console.log(className);
         $( '.navBar' ).addClass( className );
+        
     }
 }
 
@@ -34,9 +37,10 @@ export function removeFooterClass( className ) {
 }
 
 export function removeHeaderClass( className ) {
-    if ( headerCount > 0 ) {
-        headerCount--;
+    if ( headerCount[className] > 0 && className in headerCount ) {
+        headerCount[className]--;
     } else {
+        console.log(className);
         $( '.navBar' ).removeClass( className );
     }
 }
