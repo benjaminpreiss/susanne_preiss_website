@@ -1,3 +1,4 @@
+import 'intersection-observer';
 import $ from 'jquery';
 import * as helpers from './helpers.js';
 
@@ -49,13 +50,9 @@ function handleFooterIntersect( entries, observer ) {
 
 function handleRightHeaderIntersect( entries, observer ) {
   entries.forEach( ( entry ) => {
-    console.log(entry.isIntersecting)
-    console.log(entry.target)
       if ( entry.isIntersecting ) {
-          console.log('addingClass');
           helpers.addHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hr') )
       } else {
-          console.log('removingClass');
           helpers.removeHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hr') )
     }
   });

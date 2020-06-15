@@ -10,11 +10,13 @@ let headerLeftObserver;
 
 shared.addSharedEventListeners(false);
 $( window ).on( 'load', function() {
+    console.log('ready');
     footerObserver = observer.createFooterObserver();
     headerRightObserver = observer.createRightHeaderObserver();
     headerLeftObserver = observer.createLeftHeaderObserver();
     setupVideos();
     contentEffects.createEffectClasses();
+    console.log('done');
 })
 $( window ).on( 'resize', function() {
     footerObserver.disconnect();

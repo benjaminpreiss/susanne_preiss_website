@@ -22,7 +22,6 @@ export function addHeaderClass( className ) {
             headerCount[className]++;
         }
     } else {
-        console.log(className);
         $( '.navBar' ).addClass( className );
         
     }
@@ -40,7 +39,6 @@ export function removeHeaderClass( className ) {
     if ( headerCount[className] > 0 && className in headerCount ) {
         headerCount[className]--;
     } else {
-        console.log(className);
         $( '.navBar' ).removeClass( className );
     }
 }
