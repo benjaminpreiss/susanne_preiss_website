@@ -14,8 +14,12 @@ export function createObserver( elements, handleIntersect, rootMargin ) {
   
     observer = new IntersectionObserver(handleIntersect, options);
 
+    observer[ 'handleIntersectCallsSinceObserverReset' ] = 0;
+    observer[ 'observedElements' ] = 0;
+
     $( elements ).each( function( index, element ) {
         observer.observe( element );
+        observer[ 'observedElements' ]++;
     })
 
     return observer;
@@ -40,9 +44,10 @@ export function resetObserver( elements, handleIntersect, rootMargin ) {
 
 function handleFooterIntersect( entries, observer ) {
   entries.forEach( ( entry ) => {
+    observer[ 'handleIntersectCallsSinceObserverReset' ]++;
       if ( entry.isIntersecting ) {
           helpers.addFooterClass( entry.target.className.match( /(\w+\-)+footer/g ).toString().replace('-footer', '-f') )
-      } else {
+      } else if ( observer[ 'handleIntersectCallsSinceObserverReset' ] > observer[ 'observedElements' ] ) {
           helpers.removeFooterClass( entry.target.className.match( /(\w+\-)+footer/g ).toString().replace('-footer', '-f') )
     }
   });
@@ -50,9 +55,10 @@ function handleFooterIntersect( entries, observer ) {
 
 function handleRightHeaderIntersect( entries, observer ) {
   entries.forEach( ( entry ) => {
+    observer[ 'handleIntersectCallsSinceObserverReset' ]++;
       if ( entry.isIntersecting ) {
           helpers.addHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hr') )
-      } else {
+      } else if ( observer[ 'handleIntersectCallsSinceObserverReset' ] > observer[ 'observedElements' ] ) {
           helpers.removeHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hr') )
     }
   });
@@ -60,9 +66,10 @@ function handleRightHeaderIntersect( entries, observer ) {
 
 function handleLeftHeaderIntersect( entries, observer ) {
   entries.forEach( ( entry ) => {
+    observer[ 'handleIntersectCallsSinceObserverReset' ]++;
       if ( entry.isIntersecting ) {
           helpers.addHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hl') )
-      } else {
+      } else if ( observer[ 'handleIntersectCallsSinceObserverReset' ] > observer[ 'observedElements' ] ) {
           helpers.removeHeaderClass( entry.target.className.match( /(\w+\-)+header/g ).toString().replace('-header', '-hl') )
     }
   });
@@ -96,7 +103,7 @@ export function createLeftHeaderObserver() {
 }
 
 function footerMeasurements() {
-  const windowHeight = $( window ).height();
+  const windowHeight = window.outerHeight === 0 ? window.innerHeight : Math.min( window.outerHeight, window.innerHeight );
   const windowWidth = $( window ).width();
   const footerHeight = $( '.bottomNavToggles' ).outerHeight(true);
   return {
@@ -106,7 +113,7 @@ function footerMeasurements() {
 }
 
 function headerMeasurements() {
-  const windowHeight = $( window ).height();
+  const windowHeight = window.outerHeight === 0 ? window.innerHeight : Math.min( window.outerHeight, window.innerHeight );
   const windowWidth = $( window ).width();
   const headerHeight = $( '.navBar' ).outerHeight(true);
   return {
@@ -117,6 +124,9 @@ function headerMeasurements() {
 
 export function updateFooterObserver() {
   const measurements = footerMeasurements();
+  helpers.resetFooterClass( 'black-f' );
+  helpers.resetFooterClass( 'white-f' );
+  helpers.resetFooterClass( 'white-bg-f' );
   return resetObserver(
       $( '.white-footer, .black-footer, .white-bg-footer' ),
       handleFooterIntersect,
@@ -126,6 +136,9 @@ export function updateFooterObserver() {
 
 export function updateRightHeaderObserver() {
   const measurements = headerMeasurements();
+  helpers.resetHeaderClass( 'black-hr' );
+  helpers.resetHeaderClass( 'white-hr' );
+  helpers.resetHeaderClass( 'white-bg-hr' );
   return resetObserver(
       $( '.white-header, .black-header, .white-bg-header' ),
       handleRightHeaderIntersect,
@@ -136,6 +149,9 @@ export function updateRightHeaderObserver() {
 
 export function updateLeftHeaderObserver() {
   const measurements = headerMeasurements();
+  helpers.resetHeaderClass( 'black-hl' );
+  helpers.resetHeaderClass( 'white-hl' );
+  helpers.resetHeaderClass( 'white-bg-hl' );
   return resetObserver(
       $( '.white-header, .black-header, .white-bg-header' ),
       handleLeftHeaderIntersect,

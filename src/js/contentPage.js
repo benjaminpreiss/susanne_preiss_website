@@ -19,6 +19,7 @@ $( window ).on( 'load', function() {
     console.log('done');
 })
 $( window ).on( 'resize', function() {
+    console.log('resize');
     footerObserver.disconnect();
     headerRightObserver.disconnect();
     headerLeftObserver.disconnect();
