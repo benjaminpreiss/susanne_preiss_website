@@ -11,6 +11,8 @@ export function createObserver( elements, handleIntersect, rootMargin ) {
       rootMargin: rootMargin,
       threshold: buildThresholdList(1)
     };
+
+    console.log(rootMargin);
   
     observer = new IntersectionObserver(handleIntersect, options);
 

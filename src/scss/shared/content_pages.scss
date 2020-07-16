@@ -42,6 +42,7 @@
     opacity: 1;
     padding-bottom: 70px;
     transition: all vars.$content-open-dur ease vars.$content-open-dur;
+    z-index: 1;
 }
 
 .nav-open .content {

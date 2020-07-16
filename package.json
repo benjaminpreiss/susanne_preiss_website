@@ -9,7 +9,8 @@
     "jquery": "^3.4.1",
     "node-sass": "^4.14.1",
     "rfs": "^9.0.2",
-    "video.js": "^7.8.2"
+    "video.js": "^7.8.2",
+    "waypoints": "^4.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0",

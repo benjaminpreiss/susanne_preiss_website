@@ -88,6 +88,7 @@
         transition: opacity vars.$hide-cont-form-dur ease vars.$hide-cont-form-del;
         z-index: 1;
         opacity: 1;
+        overflow: auto;
     }
 }
 

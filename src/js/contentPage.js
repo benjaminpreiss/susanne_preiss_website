@@ -3,22 +3,32 @@ import * as contentEffects from './contentEffects.js';
 import setupVideos from './setupVideo.js';
 import $ from 'jquery';
 import * as observer from './intersectionObserver.js';
+import '../../node_modules/waypoints/lib/noframework.waypoints.js';
 
 let footerObserver;
 let headerRightObserver;
 let headerLeftObserver;
+let waypoint = new Waypoint({
+    element: $( '.m-text-container' )[0],
+    handler: function( direction ) {
+        if (direction === 'down') {
+            console.log('waypoint down')
+        } else {
+            console.log('waypoint up')
+        }
+    }
+})
 
 shared.addSharedEventListeners(false);
 contentEffects.createEffectClasses();
 setupVideos();
 
    
-
 window.onload = (event) => {
-    console.log('hello');
     footerObserver = observer.createFooterObserver();
     headerRightObserver = observer.createRightHeaderObserver();
     headerLeftObserver = observer.createLeftHeaderObserver();
+    
 }
 window.onresize = (event) => {
         if( footerObserver ) {
