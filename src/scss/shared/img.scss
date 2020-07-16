@@ -74,4 +74,8 @@ $rfs-two-dimensional: true;
         background: url('~img/about_start.jpg') no-repeat center center;
         background-size: cover;
     }
+    &.presse-start {
+        background: url('~img/presse_start.jpg') no-repeat center center;
+        background-size: cover;
+    }
 }

@@ -33,6 +33,11 @@
 @use './video.scss';
 @use './play_button.scss';
 
+/* article page */
+@use './article_image.scss';
+@use './article_text.scss';
+@use './link.scss';
+
 .content {
     opacity: 1;
     padding-bottom: 70px;

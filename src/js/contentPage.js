@@ -9,18 +9,28 @@ let headerRightObserver;
 let headerLeftObserver;
 
 shared.addSharedEventListeners(false);
-$( window ).on( 'load', function() {
+contentEffects.createEffectClasses();
+setupVideos();
+
+   
+
+window.onload = (event) => {
+    console.log('hello');
     footerObserver = observer.createFooterObserver();
     headerRightObserver = observer.createRightHeaderObserver();
     headerLeftObserver = observer.createLeftHeaderObserver();
-    setupVideos();
-    contentEffects.createEffectClasses();
-})
-$( window ).on( 'resize', function() {
-    footerObserver.disconnect();
-    headerRightObserver.disconnect();
-    headerLeftObserver.disconnect();
-    footerObserver = observer.updateFooterObserver();
-    headerRightObserver = observer.updateRightHeaderObserver();
-    headerLeftObserver = observer.updateLeftHeaderObserver();
-})
+}
+window.onresize = (event) => {
+        if( footerObserver ) {
+            footerObserver.disconnect();
+        }
+        if( headerLeftObserver ) {
+            headerLeftObserver.disconnect();
+        }
+        if( headerRightObserver ) {
+            headerRightObserver.disconnect();
+        }
+        footerObserver = observer.updateFooterObserver();
+        headerRightObserver = observer.updateRightHeaderObserver();
+        headerLeftObserver = observer.updateLeftHeaderObserver();
+}

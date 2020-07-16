@@ -18,6 +18,7 @@ module.exports = {
     sparring: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     speaker: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     about: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
+    presse: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
   },
   mode: 'production',
   output: {
@@ -78,6 +79,11 @@ module.exports = {
       chunks: ['about'],
       template: './src/html/about.html',
       filename: './html/about.html',
+    }),
+    new HtmlWebpackPlugin({
+      chunks: ['presse'],
+      template: './src/html/presse.html',
+      filename: './html/presse.html',
     }),
     new webpack.LoaderOptionsPlugin({
       options: {
