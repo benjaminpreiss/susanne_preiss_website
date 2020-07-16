@@ -38,7 +38,8 @@ module.exports = {
       filename: 'css/[name].css',
     }),
     new CopyPlugin([
-      { from: 'src/pdf/*.pdf', to: 'pdf/', flatten: true,},
+      { from: 'src/pdf/*.pdf', to: 'pdf/', flatten: true, },
+      { from: 'src/fav/*', to: './', flatten: true, },
     ]),
     new HtmlWebpackPlugin({
       chunks: ['index'],
