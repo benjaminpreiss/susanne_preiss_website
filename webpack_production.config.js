@@ -14,6 +14,7 @@ module.exports = {
     workshops: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     online: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     personal: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
+    nachhaltigkeit: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     business: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     sparring: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
     speaker: ['./src/scss/shared/content_pages.scss', './src/js/contentPage.js', './node_modules/video.js/dist/video-js.css'],
@@ -60,6 +61,11 @@ module.exports = {
       chunks: ['personal'],
       template: './src/html/personal.html',
       filename: './html/personal.html',
+    }),
+    new HtmlWebpackPlugin({
+      chunks: ['nachhaltigkeit'],
+      template: './src/html/nachhaltigkeit.html',
+      filename: './html/nachhaltigkeit.html',
     }),
     new HtmlWebpackPlugin({
       chunks: ['business'],

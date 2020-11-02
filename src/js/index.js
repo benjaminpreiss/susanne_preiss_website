@@ -21,11 +21,11 @@ new fullpage('#fullpage', {
             shared.headerToggle(true, true);
         }
         // change UI elements color on slide sparring arrive
-        if (destination.index == 4 && !shared.footerIsOpen()) {
+        if (destination.index == 6 && !shared.footerIsOpen()) {
             shared.whiteNavToggle();
         }
         // change UI elements color on slide sparring leave
-        if (origin.index == 4 && !shared.footerIsOpen()) {
+        if (origin.index == 6 && !shared.footerIsOpen()) {
             shared.whiteNavToggle();
         }
         // disable fullpage scrolling when either kontakt, impressum or datenschutz is open
