@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "fullpage.js": "^3.0.8",
+    "fullpage.js": "^4.0.5",
     "gsap": "^3.2.3",
     "intersection-observer": "^0.10.0",
     "jquery": "^3.4.1",
