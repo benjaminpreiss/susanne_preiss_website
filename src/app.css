@@ -1,0 +1,50 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+#fp-nav {
+	transition: transform 0.5s ease;
+}
+.nav-open #fp-nav {
+	transform: translate(300%, 0px);
+}
+
+.nav-white #fp-nav ul li a span {
+	background: #efeae3;
+}
+
+.nav-white.nav-open #fp-nav ul li a span {
+	background: black;
+}
+
+a {
+	color: #2b2c36;
+	text-decoration: none;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	background: #efeae3;
+}
+
+.vjs-poster {
+	background-position: center center !important;
+	background-size: cover !important;
+}
+
+@media (max-height: 500px) {
+	.fp-right {
+		display: none;
+	}
+}
+
+@media (max-aspect-ratio: 1/1) {
+	#fp-nav ul li a span {
+		background: #333 !important;
+	}
+
+	.fp-right {
+		display: none;
+	}
+}

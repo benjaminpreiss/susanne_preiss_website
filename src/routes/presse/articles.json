@@ -1,0 +1,100 @@
+[
+	{
+		"class": "badisches-tagesblatt",
+		"pdfPath": "/pdf/badisches_tagesblatt.pdf",
+		"title": "Badisches Tagesblatt",
+		"description": "Susanne Preiss gehört der Jury des Gala Spa Awards an...",
+		"backgroundClass": "bg-[url('/svg/badisches_tagesblatt.svg')]"
+	},
+	{
+		"class": "business-traveler",
+		"pdfPath": "/pdf/business_traveler.pdf",
+		"title": "Business Traveler",
+		"description": "\"Ich muss nicht immer erreichbar sein\"...",
+		"backgroundClass": "bg-[url('/svg/business_traveler.svg')]"
+	},
+	{
+		"class": "emotion",
+		"pdfPath": "/pdf/emotion.pdf",
+		"title": "emotion",
+		"description": "Alles braucht so lange, bis es fertig ist?...",
+		"backgroundClass": "bg-[url('/svg/emotion.svg')]"
+	},
+	{
+		"class": "emotion-slow",
+		"pdfPath": "/pdf/emotion_slow.pdf",
+		"title": "emotion slow",
+		"description": "Vier Generationen von Frauen über gutes und schlechtes Tempo in ihrem Leben...",
+		"backgroundClass": "bg-[url('/svg/emotion_slow.svg')]"
+	},
+	{
+		"class": "financial-times",
+		"pdfPath": "/pdf/financial_times.pdf",
+		"title": "Financial Times",
+		"description": "Susanne Preiss lehrt Stressgeplagte zu \"entschleunigen\"...",
+		"backgroundClass": "bg-[url('/svg/financial_times.svg')]"
+	},
+	{
+		"class": "madame",
+		"pdfPath": "/pdf/madame.pdf",
+		"title": "Madame",
+		"description": "Dass dauerhafter Stress krank machen kann, ist bekannt...",
+		"backgroundClass": "bg-[url('/svg/madame.svg')]"
+	},
+	{
+		"class": "neue-zuercher-zeitung",
+		"pdfPath": "/pdf/nzz.pdf",
+		"title": "NZZ",
+		"description": "Innere Ruhe sorgt für äußere Spannkraft...",
+		"backgroundClass": "bg-[url('/svg/nzz.svg')]"
+	},
+	{
+		"class": "stern",
+		"pdfPath": "/pdf/stern.pdf",
+		"title": "Stern",
+		"description": "Das Gefühl, immer schneller leben zu müssen, macht uns krank. Langsam wächst die Erkenntnis, dass es so nicht weitergehen kann...",
+		"backgroundClass": "bg-[url('/svg/stern.svg')]"
+	},
+	{
+		"class": "sueddeutsche-zeitung",
+		"pdfPath": "/pdf/sueddeutsche_zeitung.pdf",
+		"title": "Süddeutsche Zeitung",
+		"description": "Mal den Stecker ziehen beim Auszeit-Seminar im Fünf-Sterne-Holzhaus in den Südtiroler Bergen...",
+		"backgroundClass": "bg-[url('/svg/sueddeutsche_zeitung.svg')]"
+	},
+	{
+		"class": "welt-kompakt",
+		"pdfPath": "/pdf/welt_kompakt.pdf",
+		"title": "Welt Kompakt",
+		"description": "Stille, Entspannung und wohltuende Langsamkeit: Ein Wochenende im Kloster Plankstetten...",
+		"backgroundClass": "bg-[url('/svg/welt_kompakt.svg')]"
+	},
+	{
+		"class": "welt-am-sonntag",
+		"pdfPath": "/pdf/welt_am_sonntag.pdf",
+		"title": "Welt Am Sonntag",
+		"description": "Die Entdeckung der Langsamkeit. \"Entschleunigung\" ist das Gebot der nur scheinbar nicht vorhandenen Zeit...",
+		"backgroundClass": "bg-[url('/svg/welt_am_sonntag.svg')]"
+	},
+	{
+		"class": "rheinische-post",
+		"pdfPath": "/pdf/rheinische_post.pdf",
+		"title": "Rheinische Post",
+		"description": "Freudlose Schweißtreiberei schadet doch nur...",
+		"backgroundClass": "bg-[url('/svg/rheinische_post.svg')]"
+	},
+	{
+		"class": "manager-seminare",
+		"pdfPath": "/pdf/manager_seminare.pdf",
+		"title": "manager Seminare",
+		"description": "Der Job wird immer härter. Das Tempo zieht an, der wirtschaftliche Druck steigt...",
+		"backgroundClass": "bg-[url('/svg/manager_seminare.svg')]"
+	},
+	{
+		"class": "weser-kurier",
+		"pdfPath": "/pdf/weser_kurier.pdf",
+		"title": "Weser Kurier",
+		"description": "Wenn der Garten auf einmal ganz anders aussieht. Susanne Preiss gibt Entschleunigungskurse...",
+		"backgroundClass": "bg-[url('/svg/weser_kurier.svg')]"
+	}
+]

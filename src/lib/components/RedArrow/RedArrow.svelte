@@ -1,0 +1,37 @@
+<script lang="ts">
+	let props = $props();
+</script>
+
+<svg
+	{...props}
+	id="Ebene_1"
+	data-name="Ebene 1"
+	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	viewBox="0 0 26.94 14.83"
+>
+	<defs>
+		<style>
+			.cls-1 {
+				fill: none;
+			}
+			.cls-2 {
+				clip-path: url(#clip-path);
+			}
+			.cls-3 {
+				fill: #e52521;
+			}
+		</style>
+		<clipPath id="clip-path" transform="translate(-2 -22.7)">
+			<rect id="SVGID" class="cls-1" x="2" y="22.69" width="26.94" height="14.83" />
+		</clipPath>
+	</defs>
+	<title>SP_Website_Pfeil2</title>
+	<g class="cls-2">
+		<path
+			class="cls-3"
+			d="M24.35,27A25.31,25.31,0,0,1,20.5,22.7a12,12,0,0,0,.59,3.7,11.19,11.19,0,0,0,1.71,3.19H19.85c-2.66,0-4.61-.47-5.83-1.42A6.07,6.07,0,0,1,12,23.54H2a8.18,8.18,0,0,0,1.24,4A7.5,7.5,0,0,0,6.37,30.1a7.59,7.59,0,0,0-3.11,2.59,8.4,8.4,0,0,0-1.26,4H12A6.08,6.08,0,0,1,14,32.05c1.22-.94,3.17-1.42,5.83-1.42H22.8a11.06,11.06,0,0,0-1.71,3.19,12,12,0,0,0-.59,3.71,25.27,25.27,0,0,1,3.85-4.28,23.35,23.35,0,0,1,4.59-3.15A22.39,22.39,0,0,1,24.35,27"
+			transform="translate(-2 -22.7)"
+		/>
+	</g>
+</svg>

@@ -1,0 +1,42 @@
+[
+	{
+		"text": "START",
+		"href": "/"
+	},
+	{
+		"text": "ONLINE-TRAINING",
+		"href": "/online"
+	},
+	{
+		"text": "WORKSHOPS",
+		"href": "/workshops"
+	},
+	{
+		"text": "PERSONALENTWICKLUNG",
+		"href": "/personal"
+	},
+	{
+		"text": "NACHHALTIGKEIT",
+		"href": "/nachhaltigkeit"
+	},
+	{
+		"text": "BUSINESS COACHING",
+		"href": "/business"
+	},
+	{
+		"text": "TOP MANAGEMENT SPARRING",
+		"href": "/sparring"
+	},
+	{
+		"text": "KEY NOTE SPEAKER",
+		"href": "/speaker"
+	},
+	{
+		"text": "ABOUT",
+		"href": "/about"
+	},
+	{
+		"text": "PRESSE",
+		"href": "/presse"
+	}
+]

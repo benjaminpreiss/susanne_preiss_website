@@ -1,0 +1,26 @@
+[
+	{
+		"id": 1,
+		"title": "#quickcheck Vol 1",
+		"description": "Wie nachhaltig bin ich unterwegs? Machen Sie diesen kostenlosen Quick Check.",
+		"pdfLink": "/pdf/nachhaltigkeit1.pdf"
+	},
+	{
+		"id": 2,
+		"title": "#Nachhaltigkeits-Visionsworkshop Vol 2",
+		"description": "Die Zukunft denken auf dem Haidehof. Ein Nachhaltigkeits-Visionsworkshop für Entscheider, Führungskräfte und Teams.",
+		"pdfLink": "/pdf/nachhaltigkeit2.pdf"
+	},
+	{
+		"id": 3,
+		"title": "#HR Management Workshop Vol 3",
+		"description": "Personalentscheider als Zukunftsgestalter. Ein Workshop zur Gestaltung eines nachhaltigen HR-Management.",
+		"pdfLink": "/pdf/nachhaltigkeit3.pdf"
+	},
+	{
+		"id": 4,
+		"title": "#one-to-one Vol 4",
+		"description": "One-To-One-Coaching für nachhaltige Unternehmenstransformation.",
+		"pdfLink": "/pdf/nachhaltigkeit4.pdf"
+	}
+]

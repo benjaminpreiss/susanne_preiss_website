@@ -1,0 +1,47 @@
+[
+	{
+		"class": "workshops",
+		"layout": "l-image-left",
+		"link": "/workshops",
+		"title": "Workshops",
+		"textWrapClass": "my-[3.75rem]",
+		"backgroundClass": "bg-[url('/img/susanne_preiss_web_head_01_square.jpg')] bg-no-repeat bg-center aspect1:bg-[url('/img/susanne_preiss_web_head_01.jpg')] aspect1:bg-cover"
+	},
+	{
+		"class": "personal",
+		"layout": "l-image-right",
+		"link": "/personal",
+		"title": "Personal-<br />entwicklung",
+		"backgroundClass": "flex-row-reverse bg-cover bg-[url('/img/susanne_preiss_web_personalentwicklung.jpg')] bg-no-repeat bg-center bg-top"
+	},
+	{
+		"class": "nachhaltigkeit",
+		"layout": "l-image-left",
+		"link": "/nachhaltigkeit",
+		"title": "Nachhaltigkeit",
+		"backgroundClass": "flex-row bg-cover bg-[url('/img/susanne_preiss_nachhaltigkeit.jpg')] bg-no-repeat bg-center"
+	},
+	{
+		"class": "business",
+		"layout": "l-image-right",
+		"link": "/business",
+		"title": "Business-<br />Coaching",
+		"backgroundClass": "flex-row-reverse bg-cover bg-[url('/img/susanne_preiss_web_business_coaching.jpg')] bg-no-repeat bg-right bg-top"
+	},
+	{
+		"class": "management",
+		"layout": "l-image-left",
+		"link": "/sparring",
+		"title": "Top<br />Management<br />Sparring",
+		"backgroundClass": "flex-row bg-cover bg-[url('/img/susanne_preiss_web_top_management_sparring.jpg')] bg-no-repeat bg-center"
+	},
+	{
+		"class": "speaker",
+		"layout": "l-image-right",
+		"link": "/speaker",
+		"title": "Key Note<br />Speaker",
+		"image": "/img/susanne_preiss_web_keynote_speaker.jpg",
+		"textWrapClass": "my-[3.75rem]",
+		"backgroundClass": "flex-row-reverse aspect1:flex-none aspect1:flex-shrink aspect1:min-h-[50%]"
+	}
+]

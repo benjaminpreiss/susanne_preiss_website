@@ -1,0 +1,50 @@
+[
+	{
+		"id": 1,
+		"title": "#Online M1",
+		"description": "Standortbestimmung",
+		"pdfLink": "/pdf/online1.pdf"
+	},
+	{
+		"id": 2,
+		"title": "#Online M2",
+		"description": "ICH - im Change/Krise. Was macht mich erfolgreich?",
+		"pdfLink": "/pdf/online2.pdf"
+	},
+	{
+		"id": 3,
+		"title": "#Online M3",
+		"description": "ICH - Fokus und Konzentration. Wir komme ich zu Lösungen?",
+		"pdfLink": "/pdf/online3.pdf"
+	},
+	{
+		"id": 4,
+		"title": "#Online M4",
+		"description": "ICH - Selbstfürsorge im Change/Krise. Energiemanagement im Homeoffice",
+		"pdfLink": "/pdf/online4.pdf"
+	},
+	{
+		"id": 5,
+		"title": "#Online M5",
+		"description": "ICH - Wie kann ich virtuell kompetent und souverän wirken?",
+		"pdfLink": "/pdf/online5.pdf"
+	},
+	{
+		"id": 6,
+		"title": "#Online M6",
+		"description": "TEAM - Angst vor Veränderung. Führen im Change",
+		"pdfLink": "/pdf/online6.pdf"
+	},
+	{
+		"id": 7,
+		"title": "#Online M7",
+		"description": "TEAM - Neue Strukturen finden",
+		"pdfLink": "/pdf/online7.pdf"
+	},
+	{
+		"id": 8,
+		"title": "#Online M8",
+		"description": "TEAM - Kulturwandel in der Krise",
+		"pdfLink": "/pdf/online8.pdf"
+	}
+]
