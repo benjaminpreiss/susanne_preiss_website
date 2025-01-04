@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: payload_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: payload
+      POSTGRES_USER: payload_user
+      POSTGRES_PASSWORD: your_strong_password_here
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
