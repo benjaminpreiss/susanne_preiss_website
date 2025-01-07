@@ -1,40 +1,55 @@
-@use '../shared/mixi';
+@use "../shared/mixi";
 
 @import "../../../node_modules/rfs/scss";
 $rfs-two-dimensional: true;
 
 .workshops .background {
-    background: url(../../img/susanne_preiss_web_head_01_square.jpg) no-repeat center center;
+	background: url(../../img/susanne_preiss_web_head_01_square.jpg) no-repeat
+		center center;
 }
 
 .personal .background {
-    background: url(../../img/susanne_preiss_web_personalentwicklung.jpg) no-repeat center top;
+	background: url(../../img/susanne_preiss_web_personalentwicklung.jpg)
+		no-repeat center top;
+}
+.changemaker .background {
+	background: url(../../img/susanne_preiss_web_regenerative_changemaker.jpg)
+		no-repeat center top;
 }
 .nachhaltigkeit .background {
-    background: url(../../img/susanne_preiss_nachhaltigkeit.jpg) no-repeat center center;
+	background: url(../../img/susanne_preiss_nachhaltigkeit.jpg) no-repeat
+		center center;
 }
 .business .background {
-    background: url(../../img/susanne_preiss_web_business_coaching.jpg) no-repeat right top;
+	background: url(../../img/susanne_preiss_web_business_coaching.jpg)
+		no-repeat right top;
 }
 .management .background {
-    background: url(../../img/susanne_preiss_web_top_management_sparring.jpg) no-repeat center center;
+	background: url(../../img/susanne_preiss_web_top_management_sparring.jpg)
+		no-repeat center center;
 }
-.workshops, .personal, .business, .management, .nachhaltigkeit {
-    .background {
-        background-size: cover;
-    }
+.workshops,
+.personal,
+.changemaker,
+.business,
+.management,
+.nachhaltigkeit {
+	.background {
+		background-size: cover;
+	}
 }
 .speaker .background img {
-    object-position: top center;
+	object-position: top center;
 }
 
 .greatness .background-full img {
-    object-position: center center;
+	object-position: center center;
 }
 
-.workshops, .speaker {
-    .textWrap {
-        @include margin-top(60px);
-        @include margin-bottom(60px);
-    }
+.workshops,
+.speaker {
+	.textWrap {
+		@include margin-top(60px);
+		@include margin-bottom(60px);
+	}
 }

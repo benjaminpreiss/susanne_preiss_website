@@ -2,84 +2,89 @@
 $rfs-two-dimensional: true;
 
 .img {
-    box-sizing: border-box;
-    width: 100%;
-    //@include padding-left(100px);
-    //@include padding-right(100px);
-    @include padding-top(0);
-    @include padding-bottom(30px);
+	box-sizing: border-box;
+	width: 100%;
+	//@include padding-left(100px);
+	//@include padding-right(100px);
+	@include padding-top(0);
+	@include padding-bottom(30px);
 }
 
 .m-image-container-full {
-    height: 60vh;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
+	height: 60vh;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
 
-    .m-scroll-hint {
-        width: 100%;
-        height: 20px;
-        position: absolute;
-        bottom: 40px;
-        right: 0;
-        background: url(~svg/susanne_preiss_web_arrow_01.svg) no-repeat center center;
-        background-size: contain;
-    }
+	.m-scroll-hint {
+		width: 100%;
+		height: 20px;
+		position: absolute;
+		bottom: 40px;
+		right: 0;
+		background: url(~svg/susanne_preiss_web_arrow_01.svg) no-repeat center
+			center;
+		background-size: contain;
+	}
 }
 
 .m-image-container {
-    height: 80vmin;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
+	height: 80vmin;
+	overflow: hidden;
+	position: relative;
+	width: 100%;
 }
 
 .m-image {
-    height: 100%;
-    width: 100%;
+	height: 100%;
+	width: 100%;
 
-    &.workshops-start {
-        background: url('~img/workshops_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.workshops-steinhude {
-        background: url('~img/steinhuder_meer.JPG') no-repeat center center;
-        background-size: cover;
-    }
-    &.workshops-vigilius {
-        background: url('~img/vigilius_2.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.online-start {
-        background: url('~img/online_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.personal-start {
-        background: url('~img/personal_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.nachhaltigkeit-start {
-        background: url('~img/nachhaltigkeit_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.business-start {
-        background: url('~img/business_start.jpg') no-repeat top center;
-        background-size: cover;
-    }
-    &.sparring-start {
-        background: url('~img/sparring_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.speaker-start {
-        background: url('~img/speaker_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
-    &.about-start {
-        background: url('~img/about_start_2.jpg') no-repeat left center;
-        background-size: cover;
-    }
-    &.presse-start {
-        background: url('~img/presse_start.jpg') no-repeat center center;
-        background-size: cover;
-    }
+	&.workshops-start {
+		background: url("~img/workshops_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.workshops-steinhude {
+		background: url("~img/steinhuder_meer.JPG") no-repeat center center;
+		background-size: cover;
+	}
+	&.workshops-vigilius {
+		background: url("~img/vigilius_2.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.online-start {
+		background: url("~img/online_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.personal-start {
+		background: url("~img/personal_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.changemaker-start {
+		background: url("~img/changemaker_start.jpg") no-repeat center top;
+		background-size: cover;
+	}
+	&.nachhaltigkeit-start {
+		background: url("~img/nachhaltigkeit_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.business-start {
+		background: url("~img/business_start.jpg") no-repeat top center;
+		background-size: cover;
+	}
+	&.sparring-start {
+		background: url("~img/sparring_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.speaker-start {
+		background: url("~img/speaker_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
+	&.about-start {
+		background: url("~img/about_start_2.jpg") no-repeat left center;
+		background-size: cover;
+	}
+	&.presse-start {
+		background: url("~img/presse_start.jpg") no-repeat center center;
+		background-size: cover;
+	}
 }

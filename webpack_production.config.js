@@ -6,6 +6,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyPlugin = require("copy-webpack-plugin");
 /* const jsonImporter = require("node-sass-json-importer"); */
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const Dotenv = require("dotenv-webpack");
 
 module.exports = {
 	target: "web",
@@ -26,6 +27,11 @@ module.exports = {
 			"./node_modules/video.js/dist/video-js.css",
 		],
 		personal: [
+			"./src/scss/shared/content_pages.scss",
+			"./src/js/contentPage.js",
+			"./node_modules/video.js/dist/video-js.css",
+		],
+		changemaker: [
 			"./src/scss/shared/content_pages.scss",
 			"./src/js/contentPage.js",
 			"./node_modules/video.js/dist/video-js.css",
@@ -69,6 +75,7 @@ module.exports = {
 		filename: "js/[name].bundle.js",
 	},
 	plugins: [
+		new Dotenv(),
 		// clean dist folder before building
 		new CleanWebpackPlugin(),
 		// extracting css files to files from css-loader
@@ -101,6 +108,11 @@ module.exports = {
 			chunks: ["personal"],
 			template: "./src/html/personal.html",
 			filename: "./html/personal.html",
+		}),
+		new HtmlWebpackPlugin({
+			chunks: ["changemaker"],
+			template: "./src/html/changemaker.html",
+			filename: "./html/changemaker.html",
 		}),
 		new HtmlWebpackPlugin({
 			chunks: ["nachhaltigkeit"],

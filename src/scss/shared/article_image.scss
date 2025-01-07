@@ -2,71 +2,75 @@
 $rfs-two-dimensional: true;
 
 .m-article-image {
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-    flex: 0 0 7em;
-    min-height: 100%;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	flex: 0 0 7em;
+	min-height: 100%;
 
-    @media (max-aspect-ratio: 1/1) {
-        flex: 0 0 2em;
-        margin: 5% 25%;
-        width: 50%;
-    }
+	@media (max-aspect-ratio: 1/1) {
+		flex: 0 0 2em;
+		margin: 5% 25%;
+		width: 50%;
+	}
 
-    .badisches-tagesblatt & {
-        background-image: url('~svg/badisches_tagesblatt.svg');
-    }
+	.badisches-tagesblatt & {
+		background-image: url("~svg/badisches_tagesblatt.svg");
+	}
 
-    .business-traveler & {
-        background-image: url('~svg/business_traveler.svg');
-    }
+	.business-traveler & {
+		background-image: url("~svg/business_traveler.svg");
+	}
 
-    .emotion & {
-        background-image: url('~svg/emotion.svg');
-    }
+	.emotion & {
+		background-image: url("~svg/emotion.svg");
+	}
 
-    .emotion-slow & {
-        background-image: url('~svg/emotion_slow.svg');
-    }
+	.deep_3 & {
+		background: url("~svg/deep_3.svg") no-repeat center center, white;
+	}
 
-    .financial-times & {
-        background-image: url('~svg/financial_times.svg');
-    }
+	.emotion-slow & {
+		background-image: url("~svg/emotion_slow.svg");
+	}
 
-    .madame & {
-        background-image: url('~svg/madame.svg');
-    }
+	.financial-times & {
+		background-image: url("~svg/financial_times.svg");
+	}
 
-    .neue-zuercher-zeitung & {
-        background-image: url('~svg/nzz.svg');
-    }
+	.madame & {
+		background-image: url("~svg/madame.svg");
+	}
 
-    .stern & {
-        background-image: url('~svg/stern.svg');
-    }
+	.neue-zuercher-zeitung & {
+		background-image: url("~svg/nzz.svg");
+	}
 
-    .sueddeutsche-zeitung & {
-        background-image: url('~svg/sueddeutsche_zeitung.svg');
-    }
+	.stern & {
+		background-image: url("~svg/stern.svg");
+	}
 
-    .welt-kompakt & {
-        background-image: url('~svg/welt_kompakt.svg');
-    }
+	.sueddeutsche-zeitung & {
+		background-image: url("~svg/sueddeutsche_zeitung.svg");
+	}
 
-    .welt-am-sonntag & {
-        background-image: url('~svg/welt_am_sonntag.svg');
-    }
+	.welt-kompakt & {
+		background-image: url("~svg/welt_kompakt.svg");
+	}
 
-    .rheinische-post & {
-        background-image: url('~svg/rheinische_post.svg');
-    }
+	.welt-am-sonntag & {
+		background-image: url("~svg/welt_am_sonntag.svg");
+	}
 
-    .manager-seminare & {
-        background-image: url('~svg/manager_seminare.svg');
-    }
+	.rheinische-post & {
+		background-image: url("~svg/rheinische_post.svg");
+	}
 
-    .weser-kurier & {
-        background-image: url('~svg/weser_kurier.svg');
-    }
+	.manager-seminare & {
+		background-image: url("~svg/manager_seminare.svg");
+	}
+
+	.weser-kurier & {
+		background-image: url("~svg/weser_kurier.svg");
+	}
 }
