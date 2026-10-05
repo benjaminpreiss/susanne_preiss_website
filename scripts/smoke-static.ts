@@ -81,29 +81,33 @@ try {
       for (const file of files.filter((file) => file.endsWith('.html') && file !== '404.html')) {
         const $ = load(await readFile(resolve(root, file), 'utf8'));
         const path = '/' + file.replace(/index\.html$/, '');
-        await page.goto(site + path, { waitUntil: 'networkidle' });
+        // A redirect may lead to streaming media: network idle is not page readiness.
+        await page.goto(site + path, { waitUntil: 'domcontentloaded' });
         if ($('main').length) {
+          await page.locator('main h1').waitFor({ state: 'visible' });
           assert.equal(await page.locator('main h1').count(), 1, file);
           assert.equal(new URL(page.url()).pathname, path);
         } else if ($('meta[http-equiv="refresh"]').length) {
           const target = new URL($('link[rel="canonical"]').attr('href')!);
-          await page.waitForURL(site + target.pathname);
+          await page.waitForURL(site + target.pathname, { waitUntil: 'domcontentloaded' });
+          await page.locator('main h1').waitFor({ state: 'visible' });
         }
       }
-      await page.goto(site + '/ueber-mich/', { waitUntil: 'networkidle' });
+      await page.goto(site + '/ueber-mich/', { waitUntil: 'domcontentloaded' });
       await page.locator('#menu-trigger').click();
       await page.locator('dialog[open] a[href="/presse/"]').click();
-      await page.waitForURL(site + '/presse/');
+      await page.waitForURL(site + '/presse/', { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => !document.querySelector('dialog[open]'));
-      await page.goto(site + '/html/about.html#about', { waitUntil: 'networkidle' });
-      await page.waitForURL(site + '/ueber-mich/#about');
+      await page.goto(site + '/html/about.html#about', { waitUntil: 'domcontentloaded' });
+      await page.waitForURL(site + '/ueber-mich/#about', { waitUntil: 'domcontentloaded' });
+      await page.locator('#about').waitFor({ state: 'visible' });
       assert.equal(await page.locator('#about').count(), 1);
       assert.deepEqual(errors, [], `Browser errors at ${width}px`);
       await context.close();
     }
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto(site + '/ueber-mich/');
+    await page.goto(site + '/ueber-mich/', { waitUntil: 'domcontentloaded' });
     assert.equal(await page.locator('main h1').count(), 1);
     await context.close();
   } finally {
