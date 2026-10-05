@@ -174,7 +174,6 @@ html[data-page-kind='home'] {
     color: #67994f;
     @include responsive.values(
       (
-        margin-top: 60px,
         margin-left: 120px,
         margin-right: 120px,
       )
@@ -274,9 +273,9 @@ html[data-page-kind='home'] {
   .home-section,
   .home-section.image-right {
     flex-direction: column;
-    // Follow the visible viewport as mobile browser chrome expands/retracts.
-    // Keep a minimum, rather than a fixed height, so long/zoomed text can grow.
-    min-height: 100dvh;
+    // Stable targets do not follow toolbar expansion/retraction; rotation still updates them.
+    // A minimum lets long/zoomed copy grow in the document's native scroll flow.
+    min-height: 100lvh;
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
     }
@@ -284,20 +283,33 @@ html[data-page-kind='home'] {
       width: 100%;
     }
     .home-image {
-      min-height: 50dvh;
+      flex: 0 0 auto;
+      height: 50svh;
     }
     .home-copy {
-      min-height: 50dvh;
+      flex: 1 0 auto;
+      // Border-box includes the existing padding in this target, not on top of it.
+      min-height: calc(100lvh - 50svh);
     }
   }
   .home-intro {
     .home-image {
       order: -1;
-      flex: 1 0 50dvh;
     }
     .home-copy {
-      flex: 1 0 auto;
-      min-height: auto;
+      overflow: visible;
+    }
+    .home-text {
+      max-width: 100%;
+    }
+    h1,
+    p {
+      @include responsive.values(
+        (
+          margin-left: 40px,
+          margin-right: 40px,
+        )
+      );
     }
     .scroll-hint {
       display: none;

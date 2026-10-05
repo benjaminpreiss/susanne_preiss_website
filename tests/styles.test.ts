@@ -55,15 +55,20 @@ test('base shorthand overrides precede responsive breakpoint overrides', () => {
   );
 });
 
-test('portrait homepage tiles use dynamic minimum heights without clipping text', () => {
+test('portrait homepage tiles share stable viewport targets and allow text to grow', () => {
   const css = compact(compile('src/styles/homepage.scss').css);
   assert.match(
     css,
-    /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100dvh;/,
+    /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100lvh;/,
   );
-  assert.match(css, /\.home-image\{min-height:50dvh;/);
-  assert.match(css, /\.home-copy\{min-height:50dvh;/);
-  assert.match(css, /\.home-intro\.home-image\{order:-1;flex:1050dvh;/);
+  assert.match(css, /\.home-image\{flex:00auto;height:50svh;/);
+  assert.match(css, /\.home-copy\{flex:10auto;min-height:calc\(100lvh-50svh\);/);
+  assert.match(css, /\.home-intro\.home-image\{order:-1;\}/);
+  assert.match(css, /\.home-intro\.home-copy\{overflow:visible;\}/);
+  assert.match(css, /\.home-panel\{width:50%;min-width:0;box-sizing:border-box;/);
+  assert.match(css, /scroll-snap-type:ymandatory;/);
+  assert.match(css, /scroll-snap-align:start;/);
+  assert.doesNotMatch(css, /\d+dvh/);
 });
 
 test('homepage presentation selectors depend on options, not editorial section keys', () => {
