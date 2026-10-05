@@ -149,10 +149,14 @@ try {
           await section(page, key);
           await page.screenshot({ path: join(output, `${name}-${key}.png`) });
           assert.equal(await page.locator('.section-controls [aria-current]').count(), 1);
-          const light = key === 'nachhaltigkeit' || key === 'management';
+          const current = page.locator(`.home-section[data-home-section="${key}"]`);
+          const light = (await current.getAttribute('data-control-tone')) === 'light';
+          const menuLight =
+            (await current.getAttribute(mobile ? 'data-mobile-menu-tone' : 'data-control-tone')) ===
+            'light';
           assert.equal(
             await page.locator('#menu-trigger').evaluate((node) => getComputedStyle(node).color),
-            light ? 'rgb(239, 234, 227)' : 'rgb(43, 44, 54)',
+            menuLight ? 'rgb(239, 234, 227)' : 'rgb(43, 44, 54)',
           );
           assert.equal(
             await page.locator('.site-footer').evaluate((node) => getComputedStyle(node).color),
@@ -302,8 +306,12 @@ try {
         results.push({ name, lightReturn });
         assert.equal(
           lightReturn.color,
-          'rgb(239, 234, 227)',
-          'Light controls return after utility closure',
+          (await page
+            .locator('#section-nachhaltigkeit')
+            .getAttribute(mobile ? 'data-mobile-menu-tone' : 'data-control-tone')) === 'light'
+            ? 'rgb(239, 234, 227)'
+            : 'rgb(43, 44, 54)',
+          'Authored controls return after utility closure',
         );
         await section(page, 'workshops');
         await page.locator('#menu-trigger').click();
