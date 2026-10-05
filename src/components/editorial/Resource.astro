@@ -1,0 +1,39 @@
+---
+import ResponsiveImage from '../ResponsiveImage.astro';
+import type { ResourceProps } from '../../lib/content/editorial';
+import { editorialDestination } from '../../lib/content/destination';
+import { localeSchema } from '../../lib/content/schema';
+type Props = ResourceProps;
+const { key, destination, image, alt } = Astro.props;
+const href = await editorialDestination(
+  destination,
+  localeSchema.parse(Astro.locals.contentLocale),
+  Astro.site,
+);
+const external = !destination.startsWith('content:');
+---
+
+<section class="resource-card" data-section-key={key}>
+  <a
+    href={href}
+    target={external ? '_blank' : undefined}
+    rel={external ? 'noreferrer noopener' : undefined}
+    class:list={{
+      'resource-article': !!image,
+      'resource-document': !!image && destination.startsWith('/pdf/'),
+    }}
+  >
+    {image && (
+      <ResponsiveImage
+        src={image}
+        alt={alt!}
+        sizes="(max-aspect-ratio: 1/1) 50vw, 112px"
+        maxWidth={640}
+      />
+    )}
+    <div>
+      <slot />
+      <span class="resource-arrow" aria-hidden="true"></span>
+    </div>
+  </a>
+</section>

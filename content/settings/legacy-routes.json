@@ -1,0 +1,19 @@
+[
+  { "key": "home", "legacy": ["/", "/index.html", "/de/"] },
+  { "key": "workshops", "legacy": ["/html/workshops.html", "/de/workshops/"] },
+  { "key": "online-training", "legacy": ["/html/online.html", "/de/online-training/"] },
+  { "key": "people-development", "legacy": ["/html/personal.html", "/de/personalentwicklung/"] },
+  { "key": "changemaker", "legacy": ["/html/changemaker.html", "/de/regenerative-changemaker/"] },
+  { "key": "sustainability", "legacy": ["/html/nachhaltigkeit.html", "/de/nachhaltigkeit/"] },
+  { "key": "business-coaching", "legacy": ["/html/business.html", "/de/business-coaching/"] },
+  {
+    "key": "executive-sparring",
+    "legacy": ["/html/sparring.html", "/de/top-management-sparring/"]
+  },
+  { "key": "speaking", "legacy": ["/html/speaker.html", "/de/key-note-speaker/"] },
+  { "key": "about", "legacy": ["/html/about.html", "/de/ueber-mich/"] },
+  { "key": "press", "legacy": ["/html/presse.html", "/de/presse/"] },
+  { "key": "contact", "legacy": ["/de/kontakt/"] },
+  { "key": "imprint", "legacy": ["/de/impressum/"] },
+  { "key": "privacy", "legacy": ["/de/datenschutz/"] }
+]

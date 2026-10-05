@@ -1,0 +1,31 @@
+{
+  "de": {
+    "navigation": {
+      "home": "START",
+      "online-training": "ONLINE-TRAINING",
+      "workshops": "WORKSHOPS",
+      "people-development": "PERSONALENTWICKLUNG",
+      "changemaker": "REGENERATIVE FRAMEWORK",
+      "sustainability": "NACHHALTIGKEIT",
+      "business-coaching": "BUSINESS COACHING",
+      "executive-sparring": "TOP MANAGEMENT SPARRING",
+      "speaking": "KEY NOTE SPEAKER",
+      "about": "ABOUT",
+      "press": "PRESSE"
+    },
+    "sectionNavigation": "Abschnitte der Startseite",
+    "menu": "Menü",
+    "home": "Start",
+    "contact": "KONTAKT",
+    "imprint": "impressum",
+    "privacy": "datenschutz",
+    "close": "SCHLIESSEN",
+    "back": "ZURÜCK",
+    "language": "Sprache",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "videoUnavailable": "Das Video konnte nicht abgespielt werden. Bitte versuchen Sie es erneut.",
+    "videoNoScript": "Aktivieren Sie JavaScript, falls Ihr Browser dieses Video nicht direkt abspielen kann.",
+    "transcript": "Transkript"
+  }
+}

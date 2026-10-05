@@ -1,0 +1,9 @@
+---
+import type { ProseProps } from '../../lib/content/editorial';
+type Props = ProseProps;
+const { key } = Astro.props;
+---
+
+<section class="prose editorial-section" data-section-key={key}>
+  <slot />
+</section>

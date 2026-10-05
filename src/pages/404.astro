@@ -1,0 +1,17 @@
+---
+import { publishedContent } from '../lib/content/published';
+const routes = await publishedContent(Astro.site);
+const home = routes.resolve('home', 'de');
+---
+
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Seite nicht gefunden</title>
+  </head>
+  <body>
+    <h1>Seite nicht gefunden</h1>
+    {home && <a href={home}>Zur deutschen Startseite</a>}
+  </body>
+</html>

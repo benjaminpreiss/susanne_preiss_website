@@ -1,5 +1,9 @@
 node_modules
 dist
+.astro
+.fixture-*
 src/vid
 .git.bfg-report
 .env
+.pnpm-store/
+.husky/_/

@@ -1,0 +1,69 @@
+---
+import type { VideoProps } from '../../lib/content/editorial';
+import { localeSchema } from '../../lib/content/schema';
+import { ui } from '../../lib/content/ui';
+import { editorialDestination } from '../../lib/content/destination';
+import VideoPlayer from '../VideoPlayer.svelte';
+import ResponsiveImage from '../ResponsiveImage.astro';
+import { posterUrl } from '../../lib/images';
+type Props = VideoProps;
+const {
+  key,
+  id,
+  src,
+  poster,
+  title,
+  cover,
+  coverImage,
+  mediaLocale,
+  captionSrc,
+  captionLocale,
+  captionLabel,
+  transcript,
+  transcriptLocale,
+} = Astro.props;
+const optimizedPoster = await posterUrl(poster);
+const locale = localeSchema.parse(Astro.locals.contentLocale);
+const strings = ui[locale]!;
+const transcriptHref =
+  transcript && (await editorialDestination(transcript, transcriptLocale!, Astro.site));
+---
+
+<section id={id} class="editorial-video" data-section-key={key} data-cover={cover}>
+  <div class="video-frame">
+    <VideoPlayer
+      client:load
+      media={{
+        id,
+        src,
+        poster: optimizedPoster,
+        title,
+        mediaLocale,
+        captionSrc,
+        captionLocale,
+        captionLabel,
+      }}
+      {locale}
+      strings={{ play: strings.play, videoUnavailable: strings.videoUnavailable }}
+    />
+    <div class="prose video-title">
+      <slot />
+    </div>
+    {coverImage && (
+      <ResponsiveImage
+        class="video-cover-image"
+        src={coverImage}
+        alt=""
+        sizes="(max-aspect-ratio: 1/1) 100vw, 50vw"
+      />
+    )}
+  </div>
+  <noscript>
+    <div class="video-no-script">{strings.videoNoScript}</div>
+  </noscript>
+  {transcriptHref && (
+    <a class="media-transcript" href={transcriptHref} hreflang={transcriptLocale}>
+      {strings.transcript} ({transcriptLocale})
+    </a>
+  )}
+</section>

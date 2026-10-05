@@ -1,0 +1,27 @@
+---
+import ResponsiveImage from '../ResponsiveImage.astro';
+import type { HomeIntroProps } from '../../lib/content/editorial';
+type Props = HomeIntroProps & { imageOrder: number };
+const { key, image, alt, imageOrder } = Astro.props;
+---
+
+<section id={key} class="home-section home-intro" data-home-section={key} data-control-tone="dark">
+  <div class="home-panel home-left home-copy">
+    <div class="home-text">
+      <span id="regenerativeFrameWork"></span>
+      <span id="susannePreissCoaching"></span>
+      <slot />
+    </div>
+  </div>
+  <div class="home-panel home-right home-image">
+    <ResponsiveImage
+      src={image}
+      alt={alt}
+      sizes="(max-aspect-ratio: 1/1) 100vw, 50vw"
+      loading={imageOrder < 2 ? 'eager' : 'lazy'}
+      fetchpriority={imageOrder === 0 ? 'high' : 'auto'}
+    />
+    <span class="home-logo" aria-hidden="true"></span>
+    <span class="scroll-hint" aria-hidden="true"></span>
+  </div>
+</section>

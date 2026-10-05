@@ -1,0 +1,67 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { publishedContent } from '../lib/content/published';
+import Page from '../layouts/Page.astro';
+import ResponsiveImage from '../components/ResponsiveImage.astro';
+import Redirect from '../components/Redirect.astro';
+import { ui } from '../lib/content/ui';
+export async function getStaticPaths() {
+  const routes = await publishedContent(new URL(import.meta.env.SITE));
+  return [
+    ...routes.published.map((entry) => ({
+      params: { slug: routes.path(entry.data).slice(1, -1) || undefined },
+      props: { entry },
+    })),
+    ...routes.aliases
+      .filter((alias) => !alias.path.endsWith('.html'))
+      .map((alias) => ({
+        params: { slug: alias.path.replace(/^\/|\/$/g, '') || undefined },
+        props: { destination: alias.destination },
+      })),
+  ];
+}
+interface Props {
+  entry?: CollectionEntry<'pages'> | CollectionEntry<'shared'>;
+  destination?: string;
+}
+const { entry, destination } = Astro.props;
+if (entry) Astro.locals.contentLocale = entry.data.locale;
+const rendered = entry ? await render(entry) : undefined;
+const Content = rendered?.Content;
+---
+
+{entry && Content ? (
+  <Page entry={entry}>
+    {entry.data.translationKey === 'home' ? (
+      <>
+        <div id="fullpage" class="homepage">
+          <Content />
+        </div>
+        <nav class="section-controls" aria-label={ui[entry.data.locale]?.sectionNavigation}></nav>
+      </>
+    ) : entry.collection === 'pages' ? (
+      <>
+        <div class="hero" data-hero-tone={entry.data.heroTone ?? 'light'}>
+          <ResponsiveImage
+            src={entry.data.hero}
+            alt={entry.data.heroAlt}
+            sizes="100vw"
+            coverHeightVh={60}
+            style={`object-position: ${entry.data.heroPosition ?? 'left center'}`}
+            loading="eager"
+            fetchpriority="high"
+          />
+          <div class="scroll-hint" aria-hidden="true"></div>
+        </div>
+        <Content />
+      </>
+    ) : (
+      <article class={`utility-page shared-${entry.data.translationKey}`}>
+        {entry.data.translationKey === 'contact' && <h1 class="sr-only">{entry.data.title}</h1>}
+        <Content />
+      </article>
+    )}
+  </Page>
+) : (
+  <Redirect destination={destination!} />
+)}

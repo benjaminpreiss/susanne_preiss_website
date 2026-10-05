@@ -1,0 +1,13 @@
+---
+import ResponsiveImage from '../ResponsiveImage.astro';
+import type { IllustrationProps } from '../../lib/content/editorial';
+type Props = IllustrationProps;
+const { key, image, alt, side = 'left' } = Astro.props;
+---
+
+<section class={`illustration-panel image-${side}`} data-section-key={key}>
+  <ResponsiveImage src={image} alt={alt} sizes="(max-aspect-ratio: 1/1) 100vw, 50vw" />
+  <div>
+    <slot />
+  </div>
+</section>

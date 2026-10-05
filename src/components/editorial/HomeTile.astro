@@ -1,0 +1,48 @@
+---
+import ResponsiveImage from '../ResponsiveImage.astro';
+import type { HomeTileProps } from '../../lib/content/editorial';
+import { editorialDestination } from '../../lib/content/destination';
+import { localeSchema } from '../../lib/content/schema';
+type Props = HomeTileProps & { imageOrder: number };
+const {
+  key,
+  image,
+  mobileImage,
+  alt,
+  side = 'left',
+  tone = 'dark',
+  destination,
+  imageOrder,
+} = Astro.props;
+const href = await editorialDestination(
+  destination,
+  localeSchema.parse(Astro.locals.contentLocale),
+  Astro.site,
+);
+---
+
+<section
+  id={`section-${key}`}
+  class={`home-section home-tile image-${side}`}
+  data-home-section={key}
+  data-control-tone={tone}
+>
+  <div class={`home-panel home-image home-${side}`}>
+    <ResponsiveImage
+      src={image}
+      mobileSrc={mobileImage}
+      alt={alt}
+      sizes="(max-aspect-ratio: 1/1) 100vw, 50vw"
+      loading={imageOrder < 2 ? 'eager' : 'lazy'}
+      fetchpriority={imageOrder === 0 ? 'high' : 'auto'}
+    />
+  </div>
+  <div class={`home-panel home-copy home-${side === 'left' ? 'right' : 'left'}`}>
+    <a class="home-tile-link" id={`tile-${key}`} href={href}>
+      <slot />
+      <span class="home-arrow" aria-hidden="true">
+        »
+      </span>
+    </a>
+  </div>
+</section>
