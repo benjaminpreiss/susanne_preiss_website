@@ -121,10 +121,32 @@ Hier steht der Text.
 ### Verfügbare Bausteine
 
 - `home-intro`: Einleitung der Startseite; `key`, `image`, `alt`. Im Block stehen
-  Hauptüberschrift und Begleittext. Die bestehenden Fragmentziele bleiben erhalten.
+  Hauptüberschrift und Begleittext. `tone`, `mobileMenuTone`, `hideNavigation`,
+  `imagePosition` und `mobileImagePosition` funktionieren wie bei `home-tile`
+  (siehe unten). Das gemeinsame Intro-Layout (Bild zuerst im Hochformat,
+  halbe Bildschirmhöhe) und die bestehenden Fragmentziele bleiben erhalten.
 - `home-tile`: verlinkter Startseitenabschnitt; `key`, `image`, `alt`,
   `destination="content:translationKey"`, optional `mobileImage`, `side="left"`
-  oder `"right"` und `tone="dark"` oder `"light"` für die Bedienelemente.
+  oder `"right"` und `tone="dark"` oder `"light"` für die Bedienelemente
+  (Standard: `dark`; bezeichnet die Farbe der Bedienelemente, nicht des Hintergrunds).
+  `mobileMenuTone="dark"` oder `"light"` überschreibt nur die Farbe des Menüknopfs
+  im Hochformat (`max-aspect-ratio: 1/1`); ohne Angabe gilt `tone`. Desktop und
+  Fußzeile bleiben davon unberührt.
+  `hideNavigation=true` blendet Kopfzeile/Menü und Fußzeile auf diesem Abschnitt
+  aus (Standard: `false`, auch bei `home-intro`). Tastaturfokus macht die Elemente
+  weiterhin erreichbar und sichtbar. Die Abschnittspunkte und die eigentlichen
+  Inhaltslinks bleiben unverändert. Die bestehende Einleitung setzt diese Option
+  ausdrücklich; weder Abschnittsname noch Bausteintyp bestimmen die Sichtbarkeit.
+  `imagePosition="center top"` (Standard) akzeptiert eigenständige CSS-Positionen,
+  z. B. `"center bottom"`, `"30% 70%"`, `"right 12px top 20%"` oder
+  `"calc(50% - 10px) 25%"`. `mobileImagePosition` überschreibt den Ausschnitt nur
+  im Hochformat; ohne Angabe gilt `imagePosition`. Beide Attribute funktionieren
+  auch bei `home-intro`. Die CSS-Syntax wird beim Build geprüft; zusätzliche
+  Deklarationen, URLs und externe CSS-Variablen (`var(...)`) sind nicht erlaubt.
+  `arrow="below"` (Standard) zeigt den Pfeil unter dem Text;
+  `arrow="inline"` setzt ihn ans Ende des letzten Begleitabsatzes.
+  Diese Optionen gelten unabhängig von `key`, Reihenfolge und Zielseite. Neue
+  oder umbenannte Abschnitte benötigen keine eigenen CSS-Regeln.
   Der Inhalt enthält eine `##`-Überschrift und optional Begleittext, keine weiteren Links.
   Abschnittsreihenfolge und Beschriftungen der Abschnittssteuerung folgen diesen Blöcken.
 - `article`: zusammenhängender Text wie About; ohne Attribute.

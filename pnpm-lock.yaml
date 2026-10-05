@@ -32,6 +32,9 @@ importers:
       astro:
         specifier: 7.3.5
         version: 7.3.5(@types/node@24.10.1)(sass@1.105.1)(terser@5.37.0)(tsx@4.23.15)(yaml@2.9.1)
+      css-tree:
+        specifier: 3.2.1
+        version: 3.2.1
       gsap:
         specifier: 3.15.0
         version: 3.15.0
@@ -48,6 +51,9 @@ importers:
       '@sveltejs/mcp':
         specifier: 0.1.26
         version: 0.1.26(typescript@6.0.3)
+      '@types/css-tree':
+        specifier: 3.2.0
+        version: 3.2.0
       '@types/node':
         specifier: 24.10.1
         version: 24.10.1
@@ -1652,6 +1658,9 @@ packages:
 
   '@tybys/wasm-util@0.10.4':
     resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
+
+  '@types/css-tree@3.2.0':
+    resolution: {integrity: sha512-J5KXmk6BFIepOT7280FdFyNs4c5fh0Uee0otjKEvzchrRs38Ii9qminqc4ds0L19X8Zd/rT+brR9jkBthygjWw==}
 
   '@types/estree-jsx@1.0.5':
     resolution: {integrity: sha512-52CcUVNFyfb1A2ALocQw/Dd1BQFNmSdkuC3BkZ6iqhdMfQz7JWOFRuJFloOzjk+6WijU56m9oKXFAXc7o3Towg==}
@@ -4658,6 +4667,8 @@ snapshots:
   '@tybys/wasm-util@0.10.4':
     dependencies:
       tslib: 2.8.1
+
+  '@types/css-tree@3.2.0': {}
 
   '@types/estree-jsx@1.0.5':
     dependencies:

@@ -2,10 +2,31 @@
 import ResponsiveImage from '../ResponsiveImage.astro';
 import type { HomeIntroProps } from '../../lib/content/editorial';
 type Props = HomeIntroProps & { imageOrder: number };
-const { key, image, alt, imageOrder } = Astro.props;
+const {
+  key,
+  image,
+  alt,
+  imageOrder,
+  tone = 'dark',
+  mobileMenuTone = tone,
+  hideNavigation = false,
+  imagePosition = 'center top',
+  mobileImagePosition = imagePosition,
+} = Astro.props;
 ---
 
-<section id={key} class="home-section home-intro" data-home-section={key} data-control-tone="dark">
+<section
+  id={key}
+  class="home-section home-intro"
+  data-home-section={key}
+  data-control-tone={tone}
+  data-mobile-menu-tone={mobileMenuTone}
+  data-hide-navigation={String(hideNavigation)}
+  style={{
+    '--home-image-position': imagePosition,
+    '--home-mobile-image-position': mobileImagePosition,
+  }}
+>
   <div class="home-panel home-left home-copy">
     <div class="home-text">
       <span id="regenerativeFrameWork"></span>

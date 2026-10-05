@@ -66,6 +66,21 @@ test('portrait homepage tiles use dynamic minimum heights without clipping text'
   assert.match(css, /\.home-intro\.home-image\{order:-1;flex:1050dvh;/);
 });
 
+test('homepage presentation selectors depend on options, not editorial section keys', () => {
+  const css = compile('src/styles/homepage.scss').css;
+  assert.doesNotMatch(css, /data-home-section\s*=/);
+  for (const attribute of [
+    'data-home-mobile-menu-tone',
+    '--home-image-position',
+    '--home-mobile-image-position',
+    'data-arrow',
+    'data-home-navigation-hidden',
+    'data-hide-navigation',
+  ]) {
+    assert.ok(css.includes(attribute), `Missing presentation selector: ${attribute}`);
+  }
+});
+
 test('unsupported responsive values fail explicitly', () => {
   for (const value of ['auto', '2rem', '-10px', '40']) {
     assert.throws(() => render(`font-size: ${value}`), /non-negative px values or zero/);

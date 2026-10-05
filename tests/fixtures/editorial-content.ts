@@ -49,11 +49,15 @@ export async function seedEditorialContent(root: string) {
     let body = `{% article %}\n\n# ${key === 'about' ? 'About' : `Fixture ${key}`}\n\nEditable fixture paragraph with **emphasis** and [a link](https://example.com).\n\n{% /article %}`;
     if (key === 'home')
       body = `
-{% home-intro key="intro" image="/img/about_start_2.jpg" alt="Fixture portrait" %}
+{% home-intro key="intro" image="/img/about_start_2.jpg" alt="Fixture portrait" imagePosition="right bottom" mobileImagePosition="left top" %}
 # Fixture home
 {% /home-intro %}
-{% home-tile key="tile" destination="content:workshops" image="/img/about_start_2.jpg" mobileImage="/img/workshops_video2.jpg" alt="" tone="light" %}
+{% home-tile key="tile" destination="content:workshops" image="/img/about_start_2.jpg" mobileImage="/img/workshops_video2.jpg" alt="" tone="light" mobileMenuTone="dark" hideNavigation=true imagePosition="30% 70%" mobileImagePosition="20% 40%" arrow="inline" %}
 ## Fixture tile
+Fixture supporting text
+{% /home-tile %}
+{% home-tile key="another-tile" destination="content:workshops" image="/img/about_start_2.jpg" alt="" tone="light" %}
+## Another fixture tile
 {% /home-tile %}`;
     if (key === 'changemaker')
       body += `

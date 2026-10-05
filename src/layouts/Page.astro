@@ -25,7 +25,6 @@ const navigation = navigationModel(routes, data.translationKey, data.locale, str
 <html
   lang={data.locale}
   transition:animate="none"
-  data-home-section={data.translationKey === 'home' ? 'greatness' : undefined}
   data-home-tone={data.translationKey === 'home' ? 'dark' : undefined}
   data-page-kind={
     data.translationKey === 'home' ? 'home' : navigation.isUtility ? 'utility' : 'content'

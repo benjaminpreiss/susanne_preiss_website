@@ -54,3 +54,32 @@ local references, without snapshots of editorial text, fixed page/section counts
 or a list of pages forbidden from adding optional structured data. Historical
 migration fixtures are not an ongoing editorial contract. Valid content edits
 should not require rewriting tests; renderer or content-schema changes may.
+
+### Homepage presentation options
+
+Section keys identify content; they must not select colours, crops, arrows or
+navigation visibility. The validated Markdoc options are documented in
+`content/README.md`. Both homepage components accept control tone, a portrait menu
+tone override, navigation visibility and separate desktop/portrait image positions.
+Tiles additionally accept arrow placement. Position syntax is checked with
+CSS Tree's CSS grammar (including math-function syntax), rather than maintaining
+an enum or a home-grown CSS parser. The validator is build-time code, not a browser
+runtime dependency.
+
+The interaction publishes the active section's options and clears them on teardown.
+The initial navigation visibility is derived from the first section's authored
+attribute before JavaScript runs. Hiding retains keyboard-focus reveal for the
+header/footer; it does not remove the content links or section dots.
+
+To exercise these options against controlled content with an owner-managed CDP
+browser, use fresh output paths:
+
+```sh
+NAVIGATION_FIXTURE_OUTPUT="$PWD/.scratch/homepage-fixture" pnpm test
+node_modules/.bin/tsx tests/homepage-options-browser.ts \
+  .scratch/homepage-fixture .scratch/homepage-options-check
+```
+
+This checks portrait/desktop crops and menu tones, fallback values, visibility on
+an ordinary tile rather than an intro, keyboard access and ClientRouter teardown/
+return. It does not assert production copy or section counts.

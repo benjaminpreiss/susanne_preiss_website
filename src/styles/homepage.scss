@@ -53,7 +53,9 @@ html[data-page-kind='home'] {
       color: #efeae3;
     }
   }
-  &[data-home-section='greatness'] {
+  // Before enhancement, read the first section's authored preference from markup.
+  &:not([data-home-section]):has(main .home-section[data-hide-navigation='true']:first-child),
+  &[data-home-navigation-hidden] {
     .site-header,
     .site-footer {
       opacity: 0;
@@ -105,7 +107,7 @@ html[data-page-kind='home'] {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: var(--home-image-position, center top);
   }
   .home-copy {
     display: flex;
@@ -188,9 +190,6 @@ html[data-page-kind='home'] {
       )
     );
   }
-  img {
-    object-position: center center;
-  }
 }
 .home-logo {
   position: absolute;
@@ -209,21 +208,11 @@ html[data-page-kind='home'] {
     )
   );
 }
-.home-section[data-home-section='workshops'],
-.home-section[data-home-section='nachhaltigkeit'],
-.home-section[data-home-section='management'] {
-  img {
-    object-position: center center;
-  }
-}
-.home-section[data-home-section='business'] img {
-  object-position: right top;
-}
-.home-section[data-home-section='changemaker'] {
+.home-tile[data-arrow='inline'] {
   .home-arrow {
     display: none;
   }
-  p::after {
+  p:last-of-type::after {
     content: '';
     display: inline-block;
     height: 0.5em;
@@ -273,15 +262,10 @@ html[data-page-kind='home'] {
   }
 }
 @media (max-aspect-ratio: 1/1) {
-  html[data-page-kind='home'][data-home-section='changemaker'] .site-header .menu {
+  html[data-page-kind='home'][data-home-mobile-menu-tone='light'] .site-header .menu {
     color: #efeae3;
   }
-  html[data-page-kind='home']:is(
-      [data-home-section='nachhaltigkeit'],
-      [data-home-section='speaker']
-    )
-    .site-header
-    .menu {
+  html[data-page-kind='home'][data-home-mobile-menu-tone='dark'] .site-header .menu {
     color: #2b2c36;
   }
   html[data-page-kind='home'][data-home-tone] .site-footer {
@@ -293,6 +277,9 @@ html[data-page-kind='home'] {
     // Follow the visible viewport as mobile browser chrome expands/retracts.
     // Keep a minimum, rather than a fixed height, so long/zoomed text can grow.
     min-height: 100dvh;
+    img {
+      object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
+    }
     .home-panel {
       width: 100%;
     }
@@ -311,9 +298,6 @@ html[data-page-kind='home'] {
     .home-copy {
       flex: 1 0 auto;
       min-height: auto;
-    }
-    img {
-      object-position: center top;
     }
     .scroll-hint {
       display: none;

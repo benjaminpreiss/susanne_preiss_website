@@ -215,11 +215,32 @@ console.info(gsap.version, customElements.get('video-player'));
         assert.equal(entity.aggregateRating, undefined);
       }
       const home = await html('index.html');
-      assert.equal(home('.home-section').length, 2);
+      assert.equal(home('.home-section').length, 3);
       assert.equal(home('.home-tile-link').attr('href'), '/workshops/');
       assert.equal(home('.home-image img').first().attr('fetchpriority'), 'high');
       assert.equal(home('.home-tile source[media]').length, 3);
-      assert.equal(home('.home-section[data-control-tone="light"]').length, 1);
+      assert.equal(home('.home-section[data-control-tone="light"]').length, 2);
+      assert.equal(home('#section-tile').attr('data-mobile-menu-tone'), 'dark');
+      assert.match(home('#section-tile').attr('style')!, /--home-image-position:\s*30% 70%/);
+      assert.match(home('#section-tile').attr('style')!, /--home-mobile-image-position:\s*20% 40%/);
+      assert.equal(home('#section-tile').attr('data-arrow'), 'inline');
+      assert.equal(home('#section-tile').attr('data-hide-navigation'), 'true');
+      assert.equal(home('#section-another-tile').attr('data-mobile-menu-tone'), 'light');
+      assert.match(
+        home('#section-another-tile').attr('style')!,
+        /--home-image-position:\s*center top/,
+      );
+      assert.match(
+        home('#section-another-tile').attr('style')!,
+        /--home-mobile-image-position:\s*center top/,
+      );
+      assert.equal(home('#section-another-tile').attr('data-arrow'), 'below');
+      assert.equal(home('#section-another-tile').attr('data-hide-navigation'), 'false');
+      assert.equal(home('.home-intro').attr('data-home-section'), 'intro');
+      assert.equal(home('.home-intro').attr('data-hide-navigation'), 'false');
+      assert.match(home('.home-intro').attr('style')!, /--home-image-position:\s*right bottom/);
+      assert.match(home('.home-intro').attr('style')!, /--home-mobile-image-position:\s*left top/);
+      assert.equal(home('html').attr('data-home-section'), undefined);
       await assert.rejects(access(join(fixture, 'dist/en/training-workshops/index.html')));
       // Optional isolated browser handoff: never copy fixtures into production dist.
       if (process.env.NAVIGATION_FIXTURE_OUTPUT) {
@@ -420,6 +441,19 @@ console.info(gsap.version, customElements.get('video-player'));
       await writeFile(englishAboutPath, englishAbout);
 
       const invalidBodies = [
+        ...[
+          'mobileMenuTone',
+          'imagePosition',
+          'mobileImagePosition',
+          'arrow',
+          'hideNavigation',
+        ].map(
+          (attribute) =>
+            [
+              `{% home-tile key="arbitrary" destination="content:workshops" image="/img/about_start_2.jpg" alt="" ${attribute}="unsupported" %}\n## Fixture\n{% /home-tile %}`,
+              new RegExp(attribute),
+            ] as const,
+        ),
         ['{% unknown /%}', /Undefined tag|Unsupported editorial tag/],
         [
           '{% illustration key="missing-image" image="/img/missing.jpg" alt="" /%}',

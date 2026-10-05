@@ -1,5 +1,6 @@
 import { z } from 'astro/zod';
 import { localeSchema } from './schema';
+import { isImagePosition } from './image-position';
 
 const key = z.string().regex(/^[a-z][a-z0-9-]*$/);
 const image = z.string().regex(/^\/(?:img|svg)\/[a-zA-Z0-9_-]+\.(?:jpg|JPG|jpeg|png|webp|svg)$/);
@@ -10,16 +11,34 @@ const destination = z.union([
   z.string().regex(/^content:[a-z][a-z0-9-]*$/),
 ]);
 const identity = { key };
+const imagePosition = z.string().refine(isImagePosition, 'Expected a valid CSS image position');
+const imagePositions = {
+  imagePosition: imagePosition.default('center top'),
+  mobileImagePosition: imagePosition.optional(),
+};
+const homeControls = {
+  tone: z.enum(['dark', 'light']).default('dark'),
+  mobileMenuTone: z.enum(['dark', 'light']).optional(),
+  hideNavigation: z.boolean().default(false),
+};
 const media = { image, alt: z.string(), side: z.enum(['left', 'right']).default('left') };
 export const editorialSchemas = {
   article: z.strictObject({}),
-  'home-intro': z.strictObject({ ...identity, image, alt: z.string() }),
+  'home-intro': z.strictObject({
+    ...identity,
+    image,
+    alt: z.string(),
+    ...imagePositions,
+    ...homeControls,
+  }),
   'home-tile': z.strictObject({
     ...identity,
     ...media,
     destination: z.string().regex(/^content:[a-z][a-z0-9-]*$/),
     mobileImage: image.optional(),
-    tone: z.enum(['dark', 'light']).default('dark'),
+    ...homeControls,
+    ...imagePositions,
+    arrow: z.enum(['below', 'inline']).default('below'),
   }),
   prose: z.strictObject(identity),
   heading: z.strictObject({ ...identity, centered: z.boolean().optional() }),
