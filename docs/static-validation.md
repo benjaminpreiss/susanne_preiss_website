@@ -2,14 +2,16 @@
 
 `.github/workflows/validate.yml` validates PR event revisions (GitHub's merge
 revision) and pushes/merges to `master`. There are no feature-branch push runs,
-`pull_request_target`, release/tag triggers, production credentials or deployment.
+`pull_request_target` or release/tag triggers. Validation receives no production
+credentials. A separate, disabled-by-default production job uses the exact successful
+master artifact; see [Cloudflare deployment](cloudflare-deployment.md).
 Configure `Validate static site / validate` as a required check in repository
 settings; this change does not provision branch protection.
 
 ## Toolchain and local reproduction
 
 CI pins Node **24.20.0**, pnpm **10.8.0**, Ubuntu 24.04 and immutable action commits.
-The four action refs resolve to checkout 4.2.2, setup-node 4.4.0, pnpm/action-setup
+The validation action refs resolve to checkout 4.2.2, setup-node 4.4.0, pnpm/action-setup
 4.1.0 and upload-artifact 4.6.2. Review upstream changes before updating SHAs.
 The package supports Node >=22.12.0; use CI's exact version for reproduction.
 
@@ -69,11 +71,11 @@ hidden files only **after** this audit; there is no filtering/copy step to lose
 media or host configuration. Never copy credentials or authoring material to
 `public/`. Generated JavaScript is necessary public code, not an SSR runtime.
 
-Limits: 25 MiB per file and 20,000 files (conservative Cloudflare Pages Free
-baseline), plus a project-selected 1 GiB total artifact budget. These are checked,
-not silently worked around by omitting large media. Ticket 10 must confirm its
-chosen product's current limits; GitHub account storage quota can still reject an
-upload. See [Cloudflare limits](https://developers.cloudflare.com/pages/platform/limits/).
+Limits: 25 MiB per file and 20,000 files (confirmed Workers Static Assets Free
+limits), plus a project-selected 1 GiB total artifact budget. These are checked,
+not silently worked around by omitting large media. GitHub account storage quota
+can still reject an upload. See
+[Cloudflare limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets).
 
 ## Exact tested artifact
 
@@ -83,23 +85,26 @@ event SHA. Reruns produce different names rather than replacing artifacts. PRs
 run all gates but never upload deployable artifacts. A failed or cancelled gate
 cannot reach upload (normal success gating, no `always()` or continue-on-error).
 
-Ticket 10 adds a job **in this workflow** with `needs: validate` and a master-push
+Ticket 10's production job is **in this workflow** with `needs: validate` and a master-push
 condition. It consumes these job outputs:
 
 - `needs.validate.outputs.artifact-id`: immutable upload service ID;
 - `needs.validate.outputs.artifact-name`: commit/run/attempt association;
+- `needs.validate.outputs.artifact-digest`: upload service SHA-256 digest;
 - `needs.validate.outputs.tested-commit`: full tested SHA.
 
-Use a reviewed SHA-pinned `actions/download-artifact` with `artifact-ids` set to
+The reviewed SHA-pinned `actions/download-artifact` uses `artifact-ids` set to
 that ID in the current run. Never select latest, rebuild, or trigger another
 workflow. Use the artifact service digest/integrity verification; investigate any
 integrity warning rather than deploying. No separately published checksum asset,
 release ZIP, automatic tag or GitHub Release is produced.
 
-Validation currently cancels superseded runs. **Ticket 10 must move cancellation
-to validation-job scope when adding deployment**, so cancelling validation cannot
-interrupt a deployment halfway through. Ticket 10 owns deployment serialization,
-stale-build rejection, environment approval and production credentials. Rerunning
+Validation cancels superseded validation jobs only; cancellation is no longer
+workflow-wide. The deployment job uses its own shared, non-cancelling
+production/rollback lock. Ticket 10 owns deployment serialization, stale-build
+rejection, environment approval and production credentials. See
+[Cloudflare deployment preparation](cloudflare-deployment.md) for implemented
+local safeguards and the still-disabled standard-action deployment job. Rerunning
 only a future deployment job must consume its original successful validation output,
 not infer a name from the new attempt number.
 

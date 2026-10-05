@@ -52,7 +52,8 @@
     "sass": "1.83.1",
     "svelte-check": "4.7.6",
     "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wrangler": "4.147.0"
   },
   "version": "1.0.0",
   "packageManager": "pnpm@10.8.0"

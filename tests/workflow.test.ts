@@ -10,8 +10,9 @@ test('validation workflow preserves PR isolation and exact successful artifact h
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(
     workflow,
-    /pull_request_target|secrets\.|write-all|continue-on-error|always\(\)|workflow_run/,
+    /pull_request_target|write-all|continue-on-error|always\(\)|workflow_run/,
   );
+  assert.doesNotMatch(workflow.split('  deploy-production:')[0]!, /secrets\./);
   for (const line of workflow.split('\n').filter((line) => line.includes('uses:')))
     assert.match(line, /@[a-f0-9]{40}(?:\s|$)/);
   const commands = [
@@ -35,6 +36,9 @@ test('validation workflow preserves PR isolation and exact successful artifact h
   assert.match(workflow, /name=static-\$TESTED_SHA-\$RUN_ID-\$RUN_ATTEMPT/);
   assert.match(workflow, /test "\$\(git rev-parse HEAD\)" = "\$TESTED_SHA"/);
   assert.match(workflow, /artifact-id: \$\{\{ steps.upload.outputs.artifact-id \}\}/);
+  assert.match(workflow, /artifact-digest: \$\{\{ steps.upload.outputs.artifact-digest \}\}/);
+  assert.doesNotMatch(workflow, /^concurrency:/m);
+  assert.match(workflow, /validate:\s+#.*\s+concurrency:\s+group: validation-/);
   assert.match(workflow, /retention-days: 7/);
   assert.match(workflow, /include-hidden-files: true/);
   assert.match(workflow, /path: dist\//);

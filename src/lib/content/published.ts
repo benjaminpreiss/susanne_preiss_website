@@ -26,6 +26,7 @@ export async function publishedContent(site: URL | undefined) {
   const publicRoot = resolve('public');
   const reserved = [
     { file: '404.html', owner: 'fixed 404 page' },
+    { file: '_redirects', owner: 'Cloudflare static redirect rules' },
     ...(await publicFiles(publicRoot)).map((file) => ({
       file: relative(publicRoot, file),
       owner: 'public asset',

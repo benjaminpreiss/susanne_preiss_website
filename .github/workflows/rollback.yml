@@ -1,0 +1,145 @@
+name: Roll back a retained static deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target (production must have automatic deployment explicitly disabled)'
+        type: choice
+        options: [staging, production]
+        default: staging
+        required: true
+      artifact_id:
+        description: 'Retained Actions artifact ID that belongs to the selected version'
+        type: string
+        required: true
+      version_id:
+        description: 'Exact Cloudflare version UUID to restore'
+        type: string
+        required: true
+      expected_current_version:
+        description: 'Currently active version UUID, checked again under the target lock'
+        type: string
+        required: true
+      approve_rollback:
+        description: 'Approve restoring this exact version on the selected target'
+        type: boolean
+        default: false
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: '0'
+  ASTRO_TELEMETRY_DISABLED: '1'
+  WRANGLER_SEND_METRICS: 'false'
+
+jobs:
+  rollback:
+    if: >-
+      github.repository == 'benjaminpreiss/susanne_preiss_website' &&
+      github.ref == 'refs/heads/master' && inputs.approve_rollback &&
+      (inputs.target == 'staging' || inputs.target == 'production')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: ${{ inputs.target }}
+    concurrency:
+      group: cloudflare-${{ inputs.target }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      deployments: write
+    env:
+      DEPLOY_TARGET: ${{ inputs.target }}
+      DEPLOY_OPERATION: rollback
+      ROLLBACK_APPROVED: ${{ inputs.approve_rollback }}
+      ROLLBACK_VERSION_ID: ${{ inputs.version_id }}
+      EXPECTED_CURRENT_VERSION: ${{ inputs.expected_current_version }}
+    steps:
+      - name: Rollback opt-in and production pause
+        id: gate
+        env:
+          ROLLBACK_ENABLED: ${{ vars.CLOUDFLARE_ROLLBACK_ENABLED }}
+          DEPLOY_ENABLED: ${{ vars.CLOUDFLARE_DEPLOY_ENABLED }}
+        run: |
+          if [ "$ROLLBACK_ENABLED" != true ]; then
+            echo 'Rollback is disabled.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$DEPLOY_TARGET" = production ] && [ "$DEPLOY_ENABLED" != false ]; then
+            echo 'Set production CLOUDFLARE_DEPLOY_ENABLED to false before rollback.' >&2
+            exit 1
+          else
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          version: 10.8.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: steps.gate.outputs.enabled == 'true'
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+      - name: Install pinned tooling without rebuilding
+        if: steps.gate.outputs.enabled == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Resolve exact retained validation artifact
+        id: artifact
+        if: steps.gate.outputs.enabled == 'true'
+        env:
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: pnpm exec tsx scripts/staging-artifact.ts
+      - name: Download selected retained artifact
+        if: steps.gate.outputs.enabled == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ steps.artifact.outputs.artifact-id }}
+          run-id: ${{ steps.artifact.outputs.source-run-id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/tested-site
+          merge-multiple: true
+      - name: Verify retained version, artifact and unchanged active version
+        id: prepare
+        if: steps.gate.outputs.enabled == 'true'
+        env: &rollback-check-env
+          CLOUDFLARE_DEPLOY_ENABLED: ${{ vars.CLOUDFLARE_DEPLOY_ENABLED }}
+          CLOUDFLARE_ROLLBACK_ENABLED: ${{ vars.CLOUDFLARE_ROLLBACK_ENABLED }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_WORKER_NAME: ${{ inputs.target == 'staging' && 'susanne-preiss-staging' || vars.CLOUDFLARE_WORKER_NAME }}
+          CLOUDFLARE_ORIGIN: ${{ vars.CLOUDFLARE_ORIGIN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact-id }}
+          ARTIFACT_NAME: ${{ steps.artifact.outputs.artifact-name }}
+          ARTIFACT_DIGEST: ${{ steps.artifact.outputs.artifact-digest }}
+          SOURCE_RUN_ID: ${{ steps.artifact.outputs.source-run-id }}
+          TESTED_COMMIT: ${{ steps.artifact.outputs.tested-commit }}
+        run: pnpm exec tsx scripts/deploy-static.ts prepare
+      - name: Restore the explicitly approved version without uploading assets
+        id: upload
+        if: steps.prepare.outputs.deploy == 'true'
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3, reviewed distribution
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.147.0'
+          packageManager: pnpm
+          quiet: true
+          command: >-
+            rollback "${{ steps.prepare.outputs.rollback-version }}"
+            --config "${{ runner.temp }}/wrangler-${{ inputs.target }}.json"
+            --message "Owner-approved rollback to ${{ steps.prepare.outputs.rollback-version }}"
+      - name: Verify restored bytes and version identity
+        if: steps.upload.outcome == 'success'
+        env: *rollback-check-env
+        run: pnpm exec tsx scripts/deploy-static.ts verify
+      - name: Record failed rollback without automatic recovery
+        if: failure() && steps.upload.outcome == 'failure'
+        env: *rollback-check-env
+        run: pnpm exec tsx scripts/deploy-static.ts upload-failed
