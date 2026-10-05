@@ -1,17 +1,16 @@
-@import 'rfs/scss';
-$rfs-two-dimensional: true;
+@use 'responsive';
 
 html[data-page-kind='home'] {
   // Always settle on a section; native snapping still permits scrolling inside tall sections.
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  overflow-x: clip;
   // Transformed snap areas must not rewrite Astro's saved scroll position.
   &[data-route-phase],
   &:has(dialog[open]) {
     scroll-snap-type: none;
     scroll-behavior: auto;
   }
-  overflow-x: clip;
   main.content {
     padding-bottom: 0;
   }
@@ -125,21 +124,33 @@ html[data-page-kind='home'] {
   }
   h1,
   h2 {
-    @include font-size(73px);
-    margin: 0;
-    @include margin-left(40px);
-    @include margin-right(40px);
+    @include responsive.values(
+      (
+        font-size: 73px,
+        margin: 0,
+        margin-left: 40px,
+        margin-right: 40px,
+      )
+    );
   }
   p {
-    @include font-size(50px);
-    @include margin(40px);
-    margin-bottom: 0;
+    @include responsive.values(
+      (
+        font-size: 50px,
+        margin: 40px,
+        margin-bottom: 0,
+      )
+    );
   }
   .home-arrow {
     display: block;
-    @include font-size(118px);
     text-align: center;
     width: 85%;
+    @include responsive.values(
+      (
+        font-size: 118px,
+      )
+    );
   }
 }
 .home-tile-link {
@@ -159,15 +170,23 @@ html[data-page-kind='home'] {
   }
   h1 {
     color: #67994f;
-    @include margin-top(60px);
-    @include margin-left(120px);
-    @include margin-right(120px);
+    @include responsive.values(
+      (
+        margin-top: 60px,
+        margin-left: 120px,
+        margin-right: 120px,
+      )
+    );
   }
   p {
     color: #87613e;
-    @include margin-left(120px);
-    @include margin-right(120px);
-    margin-bottom: 0;
+    @include responsive.values(
+      (
+        margin-left: 120px,
+        margin-right: 120px,
+        margin-bottom: 0,
+      )
+    );
   }
   img {
     object-position: center center;
@@ -178,13 +197,17 @@ html[data-page-kind='home'] {
   top: 0;
   left: 0;
   right: 0;
-  @include margin-top(60px);
   height: 8vh;
   min-height: 10vmin;
   background: url('/svg/SP_logo_web.svg') no-repeat center / contain;
   width: 277px;
   max-width: 70%;
   margin-inline: auto;
+  @include responsive.values(
+    (
+      margin-top: 60px,
+    )
+  );
 }
 .home-section[data-home-section='workshops'],
 .home-section[data-home-section='nachhaltigkeit'],

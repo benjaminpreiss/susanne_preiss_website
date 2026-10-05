@@ -1,6 +1,4 @@
-// RFS 9 is retained during migration to match the captured legacy sizing.
-@import 'rfs/scss';
-$rfs-two-dimensional: true;
+@use 'responsive';
 
 :root {
   color: #000;
@@ -41,35 +39,51 @@ a {
   background: url('/svg/susanne_preiss_web_arrow_01.svg') no-repeat center / contain;
 }
 .prose {
-  @include margin-top(80px);
-  @include margin-bottom(80px);
   margin-left: auto;
   margin-right: auto;
   max-width: 800px;
   position: relative;
+  @include responsive.values(
+    (
+      margin-top: 80px,
+      margin-bottom: 80px,
+    )
+  );
   h1,
   h2,
   h3 {
-    @include font-size(40px);
-    @include margin-top(80px);
-    @include margin-bottom(30px);
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 300;
+    @include responsive.values(
+      (
+        font-size: 40px,
+        margin-top: 80px,
+        margin-bottom: 30px,
+      )
+    );
   }
   h1,
   h2,
   h3,
   p {
-    @include padding-left(30px);
-    @include padding-right(30px);
+    @include responsive.values(
+      (
+        padding-left: 30px,
+        padding-right: 30px,
+      )
+    );
   }
   p {
     font-family: 'Open Sans', sans-serif;
     font-size: 14px;
     line-height: 1.6em;
     margin-top: 0;
-    @include margin-bottom(20px);
+    @include responsive.values(
+      (
+        margin-bottom: 20px,
+      )
+    );
   }
   strong {
     font-weight: 600;
@@ -79,7 +93,11 @@ a {
   }
 }
 .editorial-heading h2 {
-  @include margin-bottom(100px);
+  @include responsive.values(
+    (
+      margin-bottom: 100px,
+    )
+  );
 }
 .editorial-video {
   .video-frame {
@@ -153,13 +171,21 @@ a {
       pointer-events: none;
     }
     .video-title h2 {
-      @include font-size(40px);
-      @include margin(40px);
       padding: 0;
+      @include responsive.values(
+        (
+          font-size: 40px,
+          margin: 40px,
+        )
+      );
     }
     .video-title p {
-      @include margin(40px);
-      margin-top: 0;
+      @include responsive.values(
+        (
+          margin: 40px,
+          margin-top: 0,
+        )
+      );
     }
     &:has(.video-play:hover),
     &:has(.video-play:focus-visible) {
@@ -293,39 +319,59 @@ a {
 }
 .centered-heading h2 {
   text-align: center;
-  @include margin-bottom(80px);
+  @include responsive.values(
+    (
+      margin-bottom: 80px,
+    )
+  );
 }
 .resource-list {
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
-  @include margin-top(40px);
-  @include margin-bottom(40px);
-  @include padding-left(50px);
-  @include padding-right(50px);
+  @include responsive.values(
+    (
+      margin-top: 40px,
+      margin-bottom: 40px,
+      padding-left: 50px,
+      padding-right: 50px,
+    )
+  );
 }
 .resource-card {
   border: black solid 0.8px;
-  @include padding(10px);
-  @include margin(10px);
+  @include responsive.values(
+    (
+      padding: 10px,
+      margin: 10px,
+    )
+  );
   p {
     margin: 0;
-    @include padding-left(30px);
-    @include padding-right(30px);
     font:
       14px/1.6 'Open Sans',
       sans-serif;
+    @include responsive.values(
+      (
+        padding-left: 30px,
+        padding-right: 30px,
+      )
+    );
   }
   strong {
     font-weight: 600;
   }
   h2 {
     margin: 0;
-    @include padding-left(30px);
-    @include padding-right(30px);
     font:
       600 14px/1.6 'Open Sans',
       sans-serif;
+    @include responsive.values(
+      (
+        padding-left: 30px,
+        padding-right: 30px,
+      )
+    );
   }
   a {
     display: block;
@@ -362,7 +408,11 @@ a {
     .resource-arrow {
       display: block;
       background: black;
-      @include margin-left(30px);
+      @include responsive.values(
+        (
+          margin-left: 30px,
+        )
+      );
     }
   }
   .resource-document {
@@ -409,11 +459,15 @@ a {
   }
   h2,
   h3 {
-    @include font-size(40px);
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 300;
     margin: 20px 0;
+    @include responsive.values(
+      (
+        font-size: 40px,
+      )
+    );
   }
   p {
     font:
@@ -444,13 +498,17 @@ a {
     padding-bottom: 70px;
   }
   h2 {
-    @include font-size(50px);
-    @include margin(40px);
-    margin-bottom: 0;
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-weight: 300;
     line-height: 0.85;
+    @include responsive.values(
+      (
+        font-size: 50px,
+        margin: 40px,
+        margin-bottom: 0,
+      )
+    );
   }
 }
 @media (max-aspect-ratio: 1/1) {
@@ -500,7 +558,11 @@ a {
     }
     p:last-of-type {
       display: block;
-      @include padding-right(30px);
+      @include responsive.values(
+        (
+          padding-right: 30px,
+        )
+      );
     }
     .resource-arrow {
       margin-left: auto;
@@ -552,20 +614,28 @@ button:disabled {
   width: 13px;
   height: 24px;
   margin: 20px 0;
-  @include margin-left(24px);
-  @include margin-right(24px);
   background: url('/svg/SP_Website_Pfeil.svg') no-repeat center / contain;
+  @include responsive.values(
+    (
+      margin-left: 24px,
+      margin-right: 24px,
+    )
+  );
 }
 .menu {
   position: relative;
   margin: 20px 0 20px auto;
-  @include margin-right(24px);
   padding: 0;
   width: 30px;
   height: 20px;
   border: 0;
   background: transparent;
   color: #2b2c36;
+  @include responsive.values(
+    (
+      margin-right: 24px,
+    )
+  );
 }
 .menu span {
   position: absolute;
@@ -596,14 +666,18 @@ button:disabled {
   inset: auto 0 0;
   z-index: 2;
   padding: 20px 0;
-  @include padding-left(24px);
-  @include padding-right(24px);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   font-family: 'Roboto', sans-serif;
   background: #efeae3;
   color: #000;
+  @include responsive.values(
+    (
+      padding-left: 24px,
+      padding-right: 24px,
+    )
+  );
   .legal {
     margin-right: 2rem;
     display: flex;
@@ -718,8 +792,12 @@ body[data-utility] .site-footer {
   h3,
   p,
   ul {
-    @include padding-left(60px);
-    @include padding-right(60px);
+    @include responsive.values(
+      (
+        padding-left: 60px,
+        padding-right: 60px,
+      )
+    );
   }
   a {
     overflow-wrap: anywhere;
@@ -744,8 +822,12 @@ body[data-utility] .site-footer {
 .main-navigation {
   background: #efeae3;
   font-family: 'Roboto', sans-serif;
-  @include font-size(18px);
   letter-spacing: 0.1em;
+  @include responsive.values(
+    (
+      font-size: 18px,
+    )
+  );
   a {
     margin: 0.5rem 20px;
     text-align: center;
@@ -768,8 +850,12 @@ body[data-utility] .site-footer {
   min-height: 100svh;
 }
 .shared-contact p {
-  @include font-size(20px);
   text-align: center;
+  @include responsive.values(
+    (
+      font-size: 20px,
+    )
+  );
 }
 .shared-imprint {
   text-align: center;

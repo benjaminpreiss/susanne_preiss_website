@@ -281,6 +281,7 @@ pnpm test     # Automatisierte Prüfungen einschließlich isolierter Inhaltsänd
 Unbekannte Tags/Attribute, fehlende Pflichtangaben, ungültige Verschachtelung, doppelte
 Block-Kennungen und fehlende Verweise stoppen den Build. Die alte `sections`-Angabe
 ist nicht mehr zulässig. Prüfen Sie Änderungen auch auf großem und kleinem Bildschirm.
-Einige Migrationstests vergleichen den Text absichtlich mit der alten Website: Bei
-gewollten Textänderungen müssen Erwartungen gezielt überprüft werden, nicht einfach
-Tests entfernt werden. Diese Befehle veröffentlichen nichts.
+Gültige Änderungen an Texten, Beschreibungen oder der Abschnittsreihenfolge erfordern
+keine Anpassung von Testerwartungen. Komponententests verwenden eigene Beispielinhalte;
+die echte Website wird auf gültige Struktur, Metadaten, Verweise und Dateien geprüft.
+Diese Befehle veröffentlichen nichts.

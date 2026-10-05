@@ -37,7 +37,6 @@
     "@videojs/html": "10.0.1",
     "astro": "7.3.5",
     "gsap": "3.15.0",
-    "rfs": "9.0.6",
     "sharp": "0.35.5",
     "svelte": "5.57.1"
   },
@@ -55,7 +54,7 @@
     "playwright": "1.63.0",
     "prettier": "3.9.9",
     "prettier-plugin-astro": "1.1.0",
-    "sass": "1.83.1",
+    "sass": "1.105.1",
     "svelte-check": "4.7.6",
     "tsx": "4.23.15",
     "typescript": "6.0.3",

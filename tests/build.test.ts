@@ -7,6 +7,7 @@ import { load } from 'cheerio';
 import sharp from 'sharp';
 import { english as englishStrings } from './fixtures/ui';
 import { buildFixture, seedImageCache } from './fixture-build';
+import { seedEditorialContent } from './fixtures/editorial-content';
 
 // Build actual Astro HTML in a disposable sibling root. Never modify production content.
 test(
@@ -25,6 +26,7 @@ test(
     try {
       for (const name of [
         'src',
+        'scripts',
         'content',
         'public',
         'astro.config.mjs',
@@ -35,7 +37,8 @@ test(
       ])
         await cp(resolve(name), join(fixture, name), { recursive: true });
       await seedImageCache(fixture);
-      // Workshops now has production editorial sections; keep its real German entry.
+      await seedEditorialContent(fixture);
+      // Renderer tests use controlled content, never the current editorial copy.
       await cp(resolve('tests/fixtures/pages/en'), join(fixture, 'content/pages/en'), {
         recursive: true,
       });
@@ -188,6 +191,35 @@ console.info(gsap.version, customElements.get('video-player'));
       const workshops = await html('workshops/index.html');
       assert.equal(workshops('[hreflang="en"]').length, 0);
       assert.equal(workshops('.language-links').length, 0);
+      assert.equal(workshops('.course-cover.cover-left').length, 1);
+      assert.equal(workshops('.course-cover.cover-right').length, 1);
+      assert.equal(workshops('.centered-heading h2').text(), 'Fixture courses');
+      assert.equal(workshops('[data-section-key="testimonial"] strong').text(), 'quoted');
+      assert.equal(workshops('.illustration-panel.image-right').length, 1);
+      const document = workshops('[data-section-key="document"] a');
+      assert.equal(document.attr('href'), '/pdf/online1.pdf');
+      assert.equal(document.attr('target'), '_blank');
+      assert.match(document.attr('rel')!, /noopener/);
+      for (const [slug, type] of [
+        ['business-coaching', 'Service'],
+        ['online-training', 'Course'],
+      ]) {
+        const page = await html(`${slug}/index.html`);
+        const entity = JSON.parse(page('script[type="application/ld+json"]').text());
+        assert.equal(entity['@type'], type);
+        assert.equal(entity.name, 'Fixture entity');
+        assert.equal(entity.description, 'An explicitly authored fixture description.');
+        assert.equal(entity.url, page('link[rel="canonical"]').attr('href'));
+        assert.equal(entity.provider['@type'], 'Person');
+        assert.equal(entity.offers, undefined);
+        assert.equal(entity.aggregateRating, undefined);
+      }
+      const home = await html('index.html');
+      assert.equal(home('.home-section').length, 2);
+      assert.equal(home('.home-tile-link').attr('href'), '/workshops/');
+      assert.equal(home('.home-image img').first().attr('fetchpriority'), 'high');
+      assert.equal(home('.home-tile source[media]').length, 3);
+      assert.equal(home('.home-section[data-control-tone="light"]').length, 1);
       await assert.rejects(access(join(fixture, 'dist/en/training-workshops/index.html')));
       // Optional isolated browser handoff: never copy fixtures into production dist.
       if (process.env.NAVIGATION_FIXTURE_OUTPUT) {
@@ -481,54 +513,3 @@ console.info(gsap.version, customElements.get('video-player'));
     }
   },
 );
-
-test('production output excludes English fixtures and preserves About wording and destinations', async () => {
-  const production = load(await readFile('dist/ueber-mich/index.html', 'utf8'));
-  const legacy = load(await readFile('tests/fixtures/legacy/html/about.html', 'utf8'));
-  const normalized = (value: string) => value.replace(/\s+/g, '');
-  assert.equal(
-    normalized(production('article').text()),
-    normalized(legacy('.m-text-container').text()),
-  );
-  assert.deepEqual(
-    production('article a')
-      .toArray()
-      .map((el) => production(el).attr('href')),
-    legacy('.m-text-container a')
-      .toArray()
-      .map((el) => legacy(el).attr('href')),
-  );
-  assert.equal(production('[hreflang="en"]').length, 0);
-  assert.equal(production('html').attr('lang'), 'de');
-  assert.equal(production('html').attr('data-page-kind'), 'content');
-  assert.equal(production('meta[name="astro-view-transitions-enabled"]').attr('content'), 'true');
-  assert.equal(production('meta[name="astro-view-transitions-fallback"]').attr('content'), 'swap');
-  assert.equal(production('main').attr('tabindex'), '-1');
-  assert.equal(production('astro-island[component-export="default"]').length, 1);
-  assert.equal(production('.language-links').length, 0);
-  assert.equal(production('.main-navigation a[href="/ueber-mich/"]').length, 1);
-  assert.equal(production('.utility-page').length, 0);
-  for (const slug of ['kontakt', 'impressum', 'datenschutz']) {
-    assert.equal(production(`.main-navigation a[href="/${slug}/"]`).length, 0);
-    assert.equal(production(`.site-footer a[href="/${slug}/"]`).length, 1);
-  }
-  for (const [slug, original] of [
-    ['kontakt', '.cont-form'],
-    ['impressum', '.impressumPage'],
-    ['datenschutz', '.datenschutzPage'],
-  ]) {
-    const page = load(await readFile(`dist/${slug}/index.html`, 'utf8'));
-    assert.equal(page('main h1').length, 1);
-    page('.sr-only').remove(); // New accessible contact heading, not a rewrite of the contact details.
-    assert.equal(normalized(page('main').text()), normalized(legacy(original!).text()));
-    assert.equal(page('link[rel="canonical"]').attr('href'), `https://susanne-preiss.de/${slug}/`);
-    assert.equal(page('meta[name="robots"][content*="noindex"]').length, 0);
-    assert.equal(page('html').attr('data-page-kind'), 'utility');
-    assert.equal(page('footer a').length, 1);
-    assert.equal(page('#page-return').text(), 'SCHLIESSEN');
-    assert.equal(page('#page-return').attr('href'), '/');
-    assert.equal(page('.site-header').length, 0);
-    assert.equal(production(`footer a[href="/${slug}/"]`).length, 1);
-  }
-  await assert.rejects(access('dist/en'));
-});
