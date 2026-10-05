@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Match this name when connecting the repository in Cloudflare.
+  "name": "susanne-preiss",
+  "compatibility_date": "2026-10-05",
+  // No live production hostname until the owner configures a custom domain.
+  // Native Worker Previews have their own URLs and do not promote production.
+  "workers_dev": false,
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "force-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": false,
+  },
+  // Required by `wrangler preview`; assets and compatibility settings stay above.
+  // This static site needs no runtime secrets, bindings or application Worker.
+  "previews": {},
+}

@@ -1,192 +1,125 @@
-# Deploying tested artifacts to Cloudflare
+# Cloudflare-native builds and branch previews
 
-## Current state
+Cloudflare's GitHub integration is the deployment authority. It builds the connected
+branch and uses **native Worker Previews** for non-production branches. No custom
+GitHub deploy/staging/rollback jobs, artifact downloader, API client or ZIP verifier
+is needed. GitHub retains independent quality checks and short-lived diagnostic artifacts.
 
-`.github/workflows/validate.yml` contains a **disabled-by-default production job**
-using standard actions:
+## Commands and configuration
 
-1. `validate` builds, tests and uploads the exact static output.
-2. `actions/download-artifact` downloads that run's immutable artifact ID.
-3. Small checks verify integrity, target configuration and candidate freshness.
-4. `cloudflare/wrangler-action` uploads the tested directory with Wrangler **4.147.0**.
-5. HTTP and control-plane checks verify the result before recording success.
+`wrangler.jsonc` defines one assets-only Worker (`susanne-preiss`), serving `dist/`
+with directory indexes, canonical trailing slashes and real 404s. Its empty `previews`
+block enables native previews; assets and compatibility settings stay at the top level.
+There is no SSR adapter, request-time application Worker, account ID, secret or DNS route.
+Wrangler **4.147.0** is pinned in package.json and the lockfile (native previews need
+4.135.0 or later). Match the Worker name when connecting the repository.
 
-**Do not enable production yet.** Manual staging and rollback workflows are now
-implemented, but owner setup, live staging tests and first activation remain outstanding. No Cloudflare app, token, DNS change or
-live deployment has been created by this work. Do not connect Cloudflare Builds;
-GitHub Actions is the sole deployment authority, with no second build on Cloudflare.
+Use these Cloudflare build settings:
 
-The downloaded artifact is never rebuilt or modified. Wrangler config lives in
-`runner.temp`, outside the artifact. Only the artifact directory is shipped; installed
-tooling and repository source remain on the runner. Wrangler is pinned in both the
-workflow and `package.json`/`pnpm-lock.yaml`; the action reuses the installed version.
-Both third-party action refs are immutable commit SHAs.
+| Setting                              | Value                                                         |
+| ------------------------------------ | ------------------------------------------------------------- |
+| Production branch                    | `master`                                                      |
+| Root directory                       | `/` (directory containing package.json and wrangler.jsonc)    |
+| Build command                        | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
+| Preview command                      | `pnpm run cloudflare:preview`                                 |
+| Deploy command, **until activation** | `pnpm run cloudflare:production`                              |
 
-## Owner-confirmed inputs
+Build variables: `NODE_VERSION=24.20.0`, `PNPM_VERSION=10.8.0`,
+`SKIP_DEPENDENCY_INSTALL=1`, `HUSKY=0`, `ASTRO_TELEMETRY_DISABLED=1`,
+`WRANGLER_SEND_METRICS=false`. Set them in Cloudflare's **Build** settings, not runtime
+bindings. Skipping automatic installation lets the build command enforce the frozen lockfile.
 
-- Repository: `benjaminpreiss/susanne_preiss_website`, public, GitHub Free.
-- Cloudflare account ID and account-specific staging origin: configure in GitHub
-  Environment variables, not public source or documentation.
-- Staging Worker name: `susanne-preiss-staging`.
-- Production branch: `master`; canonical origin: `https://susanne-preiss.de`.
+`cloudflare:build` runs **build + generated-output audit only**. The existing build
+validates content schemas, routes/references and static output; the audit checks
+asset safety/completeness, canonical origin and size/count limits. It does not rerun
+GitHub's formatting, lint, type, unit or browser suites. A failed build/audit blocks
+the Cloudflare deployment because commands are chained with `&&`.
 
-These inputs do not prove account ownership or that any project/protection exists.
-The production Worker name has not been supplied. Production preflight refuses a
-missing Worker, split-traffic deployment, or custom domain attached to another Worker.
-The job cannot bootstrap production or change DNS. Domain setup can wait until the
-owner has nameserver access; staging can eventually use workers.dev without it.
+`cloudflare:preview` is simply `wrangler preview`. Cloudflare names previews from
+branches, updates the branch preview URL on pushes, provides immutable deployment
+URLs and posts PR comments. One Worker supports multiple native previews; there is
+no separate Worker per PR and no custom PR-comment bot. URLs are public by default.
 
-## GitHub Environment contract
+## Production remains disabled
 
-Create/configure these only through the later owner-run setup walkthrough. Do not
-paste tokens into chat or commit them. The `production` Environment uses:
+`cloudflare:production` deliberately **exits with an explanatory error without
+invoking Wrangler**. Production-branch builds will therefore show a blocked/failed
+deploy, not a false successful publication. `workers_dev: false` additionally disables
+the ordinary production workers.dev hostname; native previews have their own URLs.
+New previews do not require a first production deployment.
 
-| Kind     | Name                        | Value                                                    |
-| -------- | --------------------------- | -------------------------------------------------------- |
-| Variable | `CLOUDFLARE_DEPLOY_ENABLED` | absent or `false` until separately approved activation   |
-| Variable | `CLOUDFLARE_ACCOUNT_ID`     | your intended Cloudflare account ID                      |
-| Variable | `CLOUDFLARE_WORKER_NAME`    | confirmed existing production Worker, not a staging name |
-| Variable | `CLOUDFLARE_ORIGIN`         | `https://susanne-preiss.de`                              |
-| Secret   | `CLOUDFLARE_API_TOKEN`      | account-scoped token entered directly by owner           |
+Do not use the form's default `wrangler deploy` command yet. After preview verification,
+owner approval, protection checks and a planned custom-domain/TLS/DNS cutover, the owner
+may replace the Deploy command with `pnpm exec wrangler deploy`. That change enables
+native automatic deployment on subsequent master pushes. No code or setup instructions
+here authorize that activation, an account/project creation, DNS changes or a deployment.
 
-[GitHub's Environment documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
-confirms Environment secrets/variables, selected branch restrictions and reviewers
-are available for public repositories on Free. Configure a selected **branch** rule
-exactly `master`, no tag or PR merge-ref rule. Protect master and review workflow
-changes. Once approved and enabled, ordinary successful master pushes should deploy
-without mandatory per-deploy reviewers, as requested. Rollback needs separate approval.
+## GitHub checks versus Cloudflare builds
 
-Use a custom token with account-scoped **Workers Scripts Edit** (API name:
-`Workers Scripts Write`) for this one account. The documented asset-session,
-subdomain and domain-read APIs accept it; confirm the full Wrangler operation in
-staging before production. Do not add unrelated permissions to resolve a failure
-without checking the failing endpoint. Never use a Global API key or grant DNS-write
-permissions for ordinary artifact uploads. This scope is account-wide, not per-Worker:
-a separate staging token improves revocation/audit, but is not a hard security boundary
-between Workers in the same account. The workflow's GitHub token has
-only contents-read, actions-read and deployments-write in the production job.
+GitHub runs format/lint/strict type checks, unit tests, production build, output audit
+and browser smoke. Require **Validate static site / validate** before merging to master,
+and review repository protections/bypass access. Cloudflare does **not** wait for that
+check: a branch preview may exist while GitHub checks are pending or failing. This is
+intentional for preview review; do not merge a failing PR. Direct master pushes or
+protection bypasses can bypass this merge gate, so restrict them before production.
 
-## Safety and verification
+Cloudflare builds branch commits independently. GitHub PR validation may instead test
+GitHub's synthetic merge revision. Neither the preview nor eventual production output
+is promised to be byte-identical to a GitHub artifact. The owner explicitly replaced
+the former exact-artifact deployment requirement. A merge can change the revision;
+inspect the commit/build/deployment identity reported by Cloudflare when verifying it.
 
-- Only this repository's master push events can enter the job; PR/fork/feature and
-  Renovate validation runs do not receive its credentials. The enable flag is read
-  **inside** the Environment, not in a premature job-level expression.
-- Validation cancellation is job-scoped. Production uses `cloudflare-production`
-  concurrency with `cancel-in-progress: false`; future rollback must share that key.
-- Under that lock, compare current master and previous verified success/active
-  Cloudflare identity. Skip stale commits, older successful-commit attempts and
-  still-active duplicates. Failed verification is retryable. Concurrency is not FIFO.
-  A push arriving after the final freshness read is handled by the next eligible job;
-  GitHub ref reads and Cloudflare uploads cannot form an atomic cross-service operation.
-- `scripts/deploy-static.ts prepare` verifies artifact API ID/name/run/commit,
-  expiry and SHA-256 against the validation job's digest output. The standard download
-  action warns rather than fails on checksum mismatches, so the helper checks the
-  immutable archive separately and fails closed.
-- `scripts/verify-artifact.py` uses Python's standard-library ZIP reader to compare
-  **every extracted file** against that verified archive, rejecting unsafe paths,
-  mismatches and extra/missing files. It does not extract, upload or access credentials.
-  This deliberately avoids a JS ZIP dependency. The static artifact audit runs too.
-- `cloudflare/wrangler-action` owns the actual upload. No custom uploader or custom
-  extraction pipeline remains. The Wrangler message identifies commit, artifact/run/
-  attempt and digest. No runtime Worker code, bindings, SSR adapter or SPA fallback.
-- `verify` checks public page bytes/metadata, true 404 content/status, permanent
-  redirects and query strings, representative JS/CSS/JPG/PDF bytes, plus the active
-  Cloudflare version's annotation and deployment identity. Requests request cache
-  revalidation and use cache-busting query parameters; a redirect outside the origin
-  is rejected. Real browser fragment behavior and external HLS playback need staging.
-- The summary and GitHub Deployment record distinguish uploaded-but-unverified from
-  verified success. Upload errors may already have changed the site. Failures never
-  trigger an automatic rollback. Check Cloudflare history and the failed run first.
+Treat branch builds as code execution in the build environment. Native previews isolate
+preview settings from production runtime settings, but are **not** equivalent to the
+removed trusted-workflow/static-artifact security design. Keep application secrets out
+of this static project, restrict who can push branches/change build configuration and
+review GitHub App access. Do not enable untrusted fork builds without reviewing the
+provider's actual approval/credential behavior. A repository-controlled blocker is an
+accident-prevention measure, not protection against a malicious trusted collaborator.
 
-## Static hosting rules
+## Static hosting and recovery
 
-The tested output contains generated `_redirects` (permanent, direct aliases and
-canonical slash/index rules), portable alias documents, `404.html`, and `_headers`
-with workers.dev-only `noindex`. Production is not noindexed. The temporary hostname
-would still be public: noindex is not access control. Canonicals stay at the production
-origin so staging uses the exact same bytes.
+The output retains `_redirects` (permanent aliases/slash rules), portable alias HTML,
+`404.html` and workers.dev-only `noindex` headers. Production canonicals remain at
+`https://susanne-preiss.de`; previews do not rebuild with a different canonical origin.
+Native workers.dev previews also document a noindex header. Verify it on the real URL;
+noindex is not access control. Add Cloudflare Access if private previews are needed.
 
-Workers Free permits 20,000 files and 25 MiB per file; local audits enforce these
-and a project 1 GiB total budget. Static asset requests/storage have no additional
-charge under the documented static-assets model; external video-provider and GitHub
-usage limits are separate. No paid storage, subscription or runtime is introduced.
+Use Cloudflare's native deployment history/rollback controls after explicit owner
+approval, not a custom GitHub rollback workflow. Pause automatic builds before recovery,
+identify the exact known-good version, restore it and verify pages/assets/statuses
+before resuming builds. Versions include assets, but availability is finite; ordinary
+rollback is limited to the 100 most recently published versions. If unavailable, an
+explicit historical rebuild is a new deployment, not guaranteed byte-identical recovery.
+Do not promise custom FIFO ordering, an atomic latest-master gate or coordinated
+GitHub/Cloudflare rollback locks: those custom mechanisms have been removed.
 
-## Manual staging and rollback
+## Free-tier limits and remaining evidence
 
-`.github/workflows/staging.yml` is manual-only and must run from master. It accepts
-one immutable `artifact_id` and a per-run approval checkbox (false by default).
-The `staging` Environment must independently set `CLOUDFLARE_DEPLOY_ENABLED=true`
-and contain its own `CLOUDFLARE_API_TOKEN`. It also requires Environment variables
-`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_ORIGIN` (the full HTTPS workers.dev origin
-for `susanne-preiss-staging` on that account). The helper compares the configured
-origin with Cloudflare's actual account subdomain before upload. These variables
-keep values out of repository files; they are not secrets, and a deployed staging
-hostname is publicly reachable. Never put these enable variables or
-credentials at repository/organization scope. Missing variables leave jobs disabled.
+- Static assets: 20,000 files/version and 25 MiB/file on Free. The local audit also
+  enforces a project 1 GiB budget; media is never silently discarded. HLS video hosting
+  stays with the existing external provider.
+- Workers Builds Free: **3,000 build minutes/month, one concurrent build, 20-minute
+  build timeout**. GitHub and Cloudflare now both build; budget for both. No paid upgrade
+  or storage is required for the inspected output; unrelated services have separate limits.
+- Native Previews Free: **100 previews/Worker, 100 deployments/preview**. Cloudflare
+  removes the least-recently-deployed preview/oldest deployment when limits are reached.
+  Do not assume every closed PR is automatically deleted or history is permanent.
 
-The read-only selector checks the artifact's source run is a successful, completed
-master push of `.github/workflows/validate.yml` in this repository, not a PR/fork or
-staging run. Historical successful master artifacts are allowed deliberately; no
-moving-latest selection or rebuild. Standard download-artifact receives that exact
-source run and ID. The shared helper rechecks the selection before upload.
-The staging target uses the Environment-configured account/origin and the fixed,
-dedicated `susanne-preiss-staging` name. The workflow can create that Worker only after the
-owner enables and manually approves the run. No custom domains may be attached;
-no domain/DNS writes are configured. It verifies staging noindex and all normal
-post-upload checks. Staging and production have independent non-cancelling locks.
+Still unobserved: account provisioning/build settings, native preview creation/updates,
+PR comments, actual header/redirect/fragment behavior, browser/video behavior on the
+preview origin, removed-route/cache replacement and real rollback. Local tests prove
+configuration/contracts, not Cloudflare behavior. Production/DNS activation stays pending.
 
-`.github/workflows/rollback.yml` is manual-only, defaults to staging, and requires:
+## Official references
 
-- Target, exact version UUID, matching retained artifact ID, and the currently
-  active version UUID the owner approved replacing.
-- Per-run approval plus `CLOUDFLARE_ROLLBACK_ENABLED=true` in the selected Environment.
-- For production, `CLOUDFLARE_DEPLOY_ENABLED=false` explicitly, before dispatch.
-
-Rollback uses the **same target lock** as ordinary deployment. It checks the active
-version has not changed, the selected version remains deployable, and its original
-annotation matches the artifact's commit/ID/digest. The standard Wrangler action
-runs `rollback <specific-version>`, not a new asset upload or an implicit previous
-version. Verification checks the restored version and bytes before recording success.
-Production automation stays paused; the workflow never reenables it. Reenable only
-with a separate recovery decision, knowing the next eligible master deployment may
-replace the rollback. Do not use dashboard rollbacks to bypass serialization.
-
-If the version or artifact expired, this workflow refuses rollback. Recovery requires
-an explicit new validated historical build/artifact and separately approved deployment;
-that is not guaranteed byte-identical reconstruction, and is not silently done here.
-Do not test removed-route behavior or rollback against production.
-
-[Owner setup stages](cloudflare-owner-setup.md) describe the next manual steps.
-
-## Outstanding before activation
-
-- Owner-approved staging project and live tests of redirects/fragments, headers,
-  external HLS playback, removed routes, cache replacement and asset rollback.
-- Exercise the implemented rollback workflow on staging before enabling production.
-  Cloudflare documents versions as including static assets and limits rollback to
-  the 100 most recently published versions. The workflow checks deployable versions
-  and requires the matching Actions artifact to remain available for byte verification;
-  seven-day artifacts are not permanent backups. Never promise indefinite history.
-- A setup wizard covering confirmed least-privilege token permissions, production
-  Worker/domain onboarding, staging approval, activation and disabling (set the flag
-  to `false`; do not cancel an active deployment midway).
-- GitHub service-level and Cloudflare live validation; local contract tests are not
-  evidence of real hosting semantics. Browser smoke remains blocked by a Chromium
-  launch crash in this local environment. Ticket 10 is not resolved.
-
-## Sources and reviewed pins
-
-- [Workers limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets),
-  [billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/),
-  [SSG](https://developers.cloudflare.com/workers/static-assets/routing/static-site-generation/),
-  [headers](https://developers.cloudflare.com/workers/static-assets/headers/),
-  [redirects](https://developers.cloudflare.com/workers/static-assets/redirects/).
-- [Asset upload session permissions](https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/assets/subresources/upload/methods/create/),
-  [subdomain read permissions](https://developers.cloudflare.com/api/resources/workers/subresources/subdomains/methods/get/),
-  [domain read permissions](https://developers.cloudflare.com/api/resources/workers/subresources/domains/methods/list/).
-- [Versions include assets](https://developers.cloudflare.com/workers/versions-and-deployments/),
-  [rollback limits](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/).
-- `actions/download-artifact` v4.3.0:
-  `d3f86a106a0bac45b974a628896c90dbdf5c8093`; reviewed ID-selection and digest-warning behavior.
-- `cloudflare/wrangler-action` v3 distribution:
-  `9acf94ace14e7dc412b076f2c5c20b8ce93c79cd`; reviewed inputs and installed-version reuse.
+- [Build settings and commands](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+- [Build branches](https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/)
+- [Build image and version overrides](https://developers.cloudflare.com/workers/ci-cd/builds/build-image/)
+- [Build limits](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/)
+- [GitHub integration and PR comments](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/)
+- [Native previews, URLs and retention](https://developers.cloudflare.com/workers/previews/)
+- [Preview configuration](https://developers.cloudflare.com/workers/previews/configuration/)
+- [First preview without production](https://developers.cloudflare.com/workers/previews/get-started/)
+- [Static asset limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets)
+- [Rollback limits](https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/)

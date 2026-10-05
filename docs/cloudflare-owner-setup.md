@@ -1,99 +1,95 @@
-# Owner setup: staging first, production later
+# Connect the repository to Cloudflare
 
-Nothing in this document authorizes the agent to provision or deploy. The workflows
-must first be reviewed and merged by the owner. A manual workflow cannot be run from
-the Actions UI until it exists on the default branch. Production remains disabled.
+Use **Cloudflare's native Git setup**, not the removed GitHub staging/rollback workflows.
+The owner performs these steps. Do not change the existing domain or nameservers yet.
 
-## Proposed setup-wizard stages (await owner confirmation)
+## 1. Prepare the repository
 
-These stages create/configure **only the staging Environment**, not production.
-The wizard will be generated after the owner confirms this order and scope.
+Review and merge the native-build configuration into master after GitHub checks pass.
+Then create/push a feature branch from that revision for the first preview. It must
+contain `wrangler.jsonc` and the `cloudflare:*` package scripts.
 
-1. **Confirm account and staging target.** Open Cloudflare Workers & Pages for
-   your intended account. Note its account ID and workers.dev subdomain, and confirm
-   `susanne-preiss-staging` is a dedicated staging name, not a Worker serving another
-   site. Keep account-specific values in GitHub Environment settings, not repository
-   files. No Git connection, paid upgrade or DNS change.
-2. **Configure GitHub staging Environment.** Open repository Settings → Environments
-   for `benjaminpreiss/susanne_preiss_website`; create `staging` if absent. Set selected
-   deployment branches to the branch `master`, not a tag rule. Set Environment
-   variable `CLOUDFLARE_DEPLOY_ENABLED=false` initially. Add Environment variable
-   `CLOUDFLARE_ACCOUNT_ID` with your account ID and `CLOUDFLARE_ORIGIN` with the full
-   staging origin: `https://susanne-preiss-staging.<your-subdomain>.workers.dev`
-   (replace the placeholder; no trailing slash). These values are shared by staging
-   deploy and staging rollback. Public/Free supports these controls. Check there are no same-named repository/organization enable variables.
-   Store no production credential here. Captured public target is the staging Environment.
-3. **Create and store the staging token.** Open Cloudflare's Account API Tokens page,
-   create a custom token with account **Workers Scripts Edit** (API permission
-   `Workers Scripts Write`), restricted to the confirmed account. Do not accept the
-   broad Workers template's extra KV/R2/DNS permissions without reviewing them.
-   Capture the token with hidden input and write it directly to Environment secret
-   `CLOUDFLARE_API_TOKEN` in `staging`, never chat, `.env`, scratch notes or command
-   arguments. Prefer an expiry and revoke when no longer needed. Account scope is
-   not per-Worker isolation; a token with script-write can affect other Workers in
-   that account. Token creation/storage does not authorize deployment.
-4. **Select an exact tested artifact and approve first staging deployment.** After
-   review/merge, let `Validate static site` finish successfully on master. Select its
-   immutable artifact ID (not its run ID or name); record the source commit/run and
-   digest for audit. The artifact must include the new host files and must not have
-   expired. After a separate explicit confirmation, set staging's enable variable
-   to `true` and run **Deploy selected artifact to staging** from master with that
-   ID and its approval checkbox. This can create/update the public staging Worker.
-   No production settings are changed. The wizard should stop before dispatch unless
-   the owner explicitly confirms this stage; it must not treat earlier setup as approval.
-5. **Review staging evidence and disable when finished.** Inspect the run summary's
-   artifact/commit and Cloudflare deployment/version identities, open the reported
-   workers.dev site, and perform the browser/live-host checks below. Record the
-   non-secret result. Set staging's enable variable back to `false` when finished if
-   further manual deployment is not needed. Do not cancel an in-flight upload.
+Require **Validate static site / validate** before merging PRs. Keep GitHub validation:
+Cloudflare builds do not wait for it, and intentionally do not duplicate its test suite.
 
-Cloudflare account token page:
-https://dash.cloudflare.com/?to=/:account/api-tokens
+If the previous setup was already configured, disable the old Actions deployment
+paths first. Remove unused staging/production GitHub secrets/enable variables and
+revoke old tokens if no longer used. Do not revoke a token still needed elsewhere.
+No GitHub Cloudflare deployment credentials or artifact IDs are needed in the new setup.
 
-Repository Environment settings:
-https://github.com/benjaminpreiss/susanne_preiss_website/settings/environments
+## 2. Connect Git in Cloudflare
 
-## Live checks still required
+Open **Workers & Pages → create/connect a Worker to GitHub**, and grant the Cloudflare
+GitHub App access to only this repository. Choose Worker name **`susanne-preiss`** to
+match `wrangler.jsonc` (or deliberately update both names before building).
 
-The workflow checks page/asset bytes, response status, redirects, staging noindex and
-version identity; local mocks only prove checker behavior. On approved staging, also:
+Before submitting the form, configure:
 
-- Follow deep links and menu navigation on desktop/mobile, with JavaScript disabled
-  where supported. Check portable redirect fragment inheritance (`#about`) and queries.
-- Play external HLS videos; unchanged external hosting does not prove staging-origin
-  playback or availability. Check MIME types and browser console/network errors.
-- Compare successive explicitly selected validated artifacts: changed assets must
-  update, and removed managed files/routes must not remain available from stale cache.
-  Do not modify an artifact after validation to invent a fixture. If no suitable
-  differing artifacts exist, plan a separate owner-approved staging-only fixture test.
-- Exercise rollback **on staging first** using two actual known versions and the
-  matching retained artifact, and verify restored bytes/404s. Record observed retention
-  limits; do not extrapolate from mocks or claim perpetual history.
+| Field             | Value                                                         |
+| ----------------- | ------------------------------------------------------------- |
+| Production branch | `master`                                                      |
+| Root directory    | `/`                                                           |
+| Build command     | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
+| Deploy command    | `pnpm run cloudflare:production`                              |
+| Preview command   | `pnpm run cloudflare:preview`                                 |
 
-## Rollback owner inputs
+**Do not accept the default production deploy command.** Our production command is
+an intentional blocker and cannot publish the live site. The initial master build
+may therefore end with "Production deployment is disabled"; that is expected.
 
-To enable the manual rollback workflow, set `CLOUDFLARE_ROLLBACK_ENABLED=true` in the
-selected Environment. Supply target, selected retained version UUID, corresponding
-retained artifact ID, expected currently active version UUID, and explicit approval.
-Rollback uses the same target lock as deployment. It refuses missing/expired artifacts,
-unavailable versions, identity mismatch or a changed active version.
+Under build variables (not runtime bindings), configure:
 
-For **production**, first set `CLOUDFLARE_DEPLOY_ENABLED=false` in production. Leave it
-false after rollback until separately deciding to resume automatic master deployment.
-Otherwise a subsequent master push could replace the recovered version. The workflow
-requires the explicit pause and never changes the enable flags for you.
+```text
+NODE_VERSION=24.20.0
+PNPM_VERSION=10.8.0
+SKIP_DEPENDENCY_INSTALL=1
+HUSKY=0
+ASTRO_TELEMETRY_DISABLED=1
+WRANGLER_SEND_METRICS=false
+```
 
-## Production is a later setup
+No account ID, account-specific hostname or credential belongs in repository files.
+Cloudflare's connected account supplies the target context. No SSR adapter or starter
+Worker is needed. New native previews can be created before first production deployment.
 
-It needs a confirmed production Worker name, an already-provisioned dedicated static
-Worker, an active Cloudflare zone, verified custom-domain attachment/TLS and approved
-DNS cutover. The ordinary production workflow deliberately refuses bootstrap. Design
-and approve that one-off activation after staging evidence is complete; do not rename
-the staging Worker or attach the live domain to it as a shortcut.
+### Token permissions
 
-Create the production Environment with a separate token, master-only branch rule,
-confirmed target variables, and enable `false`. Enabling automatic production and any
-DNS changes require separate owner approval. No per-deploy reviewer is required after
-activation unless the owner requests one. Monitor Cloudflare/GitHub usage and avoid
-paid add-ons; public standard hosted Actions and static hosting eligibility do not
-make unrelated services or external video-provider usage unlimited.
+Workers Builds can create a token or use an existing **user token**. Current native
+Builds docs say account-owned tokens are not supported. The automatically generated
+token is broader than this static site needs (including KV/R2 and route permissions).
+Review scope in **My Profile → API Tokens** before granting access; prefer a user token
+restricted to the intended account and the permissions needed for script/static-asset
+uploads. Do not add application secrets, paste tokens into chat or commit them. If a
+permission fails, inspect the failing endpoint rather than granting unrestricted access.
+Review the provider's [current token settings](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/#api-token).
+
+## 3. Enable and review a native preview
+
+In Worker **Settings → Build → Branch control**, enable preview builds. New projects
+use Worker Previews with `wrangler preview`; do not switch to legacy `versions upload`.
+An older connected project may require the provider's one-time Worker Previews setup.
+
+Push a trusted non-master branch and open a PR. Cloudflare builds the branch and
+posts a preview link. Subsequent pushes update the branch URL; each preview deployment
+also has its own immutable URL. The native build must pass the site's build/content
+validation and generated-output audit. GitHub independently runs the full quality suite.
+A preview may be available even when GitHub checks fail; do not merge until checks pass.
+
+Verify the preview's recorded commit, noindex header, canonical metadata, deep links,
+permanent redirects/queries/fragments, real missing-path 404, images/PDFs, menu navigation
+and external HLS playback. Before production, also test replacement of removed assets/
+routes and rollback on a disposable preview with explicit owner approval. Do not modify
+built output after validation or use production as a test fixture.
+
+## 4. Leave production disabled until the domain is ready
+
+Do not attach a production custom domain or change DNS yet. Preview URLs need no access
+to your domain's nameservers. Keep `pnpm run cloudflare:production` as the Deploy command.
+Old `CLOUDFLARE_DEPLOY_ENABLED` flags no longer activate anything.
+
+After preview evidence, branch protections, HTTPS/domain setup and explicit activation
+approval, the owner may change the Deploy command to `pnpm exec wrangler deploy` and
+coordinate the DNS cutover. Subsequent master pushes then use native automatic deployment.
+Pausing/disabling builds and native rollback are documented in
+[the deployment contract](cloudflare-deployment.md). No per-deploy custom approval system
+or custom GitHub deployment framework remains.

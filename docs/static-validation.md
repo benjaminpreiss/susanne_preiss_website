@@ -1,19 +1,17 @@
-# Static validation and artifact handoff
+# Static validation and diagnostic artifacts
 
-`.github/workflows/validate.yml` validates PR event revisions (GitHub's merge
-revision) and pushes/merges to `master`. There are no feature-branch push runs,
-`pull_request_target` or release/tag triggers. Validation receives no production
-credentials. A separate, disabled-by-default production job uses the exact successful
-master artifact; see [Cloudflare deployment](cloudflare-deployment.md).
-Configure `Validate static site / validate` as a required check in repository
-settings; this change does not provision branch protection.
+`.github/workflows/validate.yml` checks PR event revisions (GitHub's merge revision)
+and pushes to master. There are no feature-branch push runs, release/tag triggers,
+`pull_request_target`, deployment jobs or Cloudflare credentials in GitHub Actions.
+Superseded validation is cancelled at job scope. Configure **Validate static site /
+validate** as a required merge check; committing the workflow does not configure
+repository protections or prevent privileged bypasses.
 
-## Toolchain and local reproduction
+## Local and CI checks
 
-CI pins Node **24.20.0**, pnpm **10.8.0**, Ubuntu 24.04 and immutable action commits.
-The validation action refs resolve to checkout 4.2.2, setup-node 4.4.0, pnpm/action-setup
-4.1.0 and upload-artifact 4.6.2. Review upstream changes before updating SHAs.
-The package supports Node >=22.12.0; use CI's exact version for reproduction.
+CI pins Node **24.20.0**, pnpm **10.8.0**, Ubuntu 24.04 and immutable action commits:
+checkout 4.2.2, setup-node 4.4.0, pnpm/action-setup 4.1.0, upload-artifact 4.6.2.
+The package supports Node >=22.12.0; use CI's version for reproduction.
 
 ```sh
 HUSKY=0 pnpm install --frozen-lockfile
@@ -27,89 +25,39 @@ pnpm artifact:check
 pnpm smoke:static
 ```
 
-The formatting/lint/type commands are shared with local tooling; CI never fixes
-files. See [coverage and narrow Astro/Markdoc fallbacks](quality-tooling.md).
-Tests require a fresh build. Test files run serially to avoid competing image encoders
-on small CI runners. Isolated build fixtures copy only `node_modules/.astro/assets`
-from that build into their own caches; content stores, generated HTML and source
-remain isolated. Astro still validates transformation cache keys and generates any
-new image variants. The 120-second per-build timeout remains enforced, with explicit
-process-error diagnostics (including for expected-failure content tests).
+Formatting/lint/type checks reuse the local Husky scripts without formatting fixes.
+See [tool coverage and narrow fallbacks](quality-tooling.md). Tests require a fresh
+build and run serially; build fixtures use independent copies of Astro's image cache,
+not shared content stores or generated HTML. CI checks out LFS assets and the output
+audit rejects unresolved LFS pointers. No CI browser/server depends on the owner's
+machine or OrbStack.
 
-The build validates editorial schemas, references,
-local assets, published routes and links; fixture tests exercise unpublished and
-translated content. LFS checkout is enabled even though the current output needs
-no LFS pointers. Unresolved pointers in output fail the artifact audit.
+The build validates content/schema references, routes and internal assets. The output
+audit requires explicitly static domain-root hosting, a verified production HTTPS
+origin, no SSR adapter, safe public files, complete index/404 output, and matching
+canonical/alternate origins. It allows required `_headers`, `_redirects` and narrowly
+supported `.well-known` files, but rejects symlinks, source, private/runtime directories
+and other dotfiles. Never copy credentials or authoring content to public output.
 
-The smoke command owns an ephemeral loopback plain file server and Chromium,
-checks every output file over HTTP byte-for-byte, real 404 content/status, every
-HTML route and redirect, legacy fragment navigation, desktop/mobile menu navigation
-and no-JavaScript content. It is not a full visual, external-service, video-playback
-or accessibility audit. It requires neither Astro's preview server nor OrbStack.
-Browser installation and Linux libraries are provisioned in CI.
+Limits: Workers Static Assets Free allows **20,000 files/version and 25 MiB/file**;
+the project also caps total output at 1 GiB. The audit fails rather than dropping
+media. These are output limits, not promises about GitHub/Cloudflare build allowances.
 
-## Origin and hosting
+The smoke script owns a plain static HTTP server and browser. It checks every file's
+bytes, routes/deep links, portable redirects/fragments, 404 content/status, desktop/
+mobile menu navigation and no-JavaScript content. It does not emulate Cloudflare's
+HTTP redirect/header/cache rules or prove external streaming video playback. Those
+require an approved live preview. An Astro preview-server pass is not a replacement.
 
-`astro.config.mjs` is the non-secret origin configuration: `site` is
-`https://susanne-preiss.de`, owner-confirmed in ticket 01. The deployment gate rejects
-missing/non-HTTPS/local/placeholder origins, credentials, ports and URL paths.
-`output: 'static'`, no adapter and root `base` are required. Subdirectory hosting
-is deliberately rejected: it requires explicit configuration, coordinated route
-and validator changes, and a rebuild, not moving existing files into a directory.
+## GitHub artifacts are evidence, not deployment input
 
-Serve directory-index HTML, assets with correct MIME types, and `404.html` with
-**404** status. Do not use an SPA catch-all. Portable HTML redirects are included;
-permanent HTTP redirect rules and Cloudflare-specific behavior are ticket 10's
-responsibility. No application Worker, function, SSR adapter or Node server is
-needed at runtime. ClientRouter enhances navigation without changing that contract.
+Successful master push runs upload the exact tested `dist/`, including required hidden
+host files, for seven days. Name: `static-<full commit SHA>-<run ID>-<run attempt>`.
+The checkout SHA must match the event SHA; reruns have distinct attempt names. PR
+runs get no deployment credentials and do not upload these master artifacts.
+A failed/cancelled validation cannot reach artifact upload.
 
-The artifact audit allows public file extensions and explicitly `_headers`,
-`_redirects`, and supported files under `.well-known/`; all other dotfiles, symlinks,
-source extensions and known private/runtime directories fail closed. Add a narrow
-reviewed allowance if a host genuinely requires another file. Upload includes
-hidden files only **after** this audit; there is no filtering/copy step to lose
-media or host configuration. Never copy credentials or authoring material to
-`public/`. Generated JavaScript is necessary public code, not an SSR runtime.
-
-Limits: 25 MiB per file and 20,000 files (confirmed Workers Static Assets Free
-limits), plus a project-selected 1 GiB total artifact budget. These are checked,
-not silently worked around by omitting large media. GitHub account storage quota
-can still reject an upload. See
-[Cloudflare limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets).
-
-## Exact tested artifact
-
-Only successful master push runs upload `dist/`. Artifact name:
-`static-<full commit SHA>-<run ID>-<run attempt>`. `git rev-parse HEAD` must equal the
-event SHA. Reruns produce different names rather than replacing artifacts. PRs
-run all gates but never upload deployable artifacts. A failed or cancelled gate
-cannot reach upload (normal success gating, no `always()` or continue-on-error).
-
-Ticket 10's production job is **in this workflow** with `needs: validate` and a master-push
-condition. It consumes these job outputs:
-
-- `needs.validate.outputs.artifact-id`: immutable upload service ID;
-- `needs.validate.outputs.artifact-name`: commit/run/attempt association;
-- `needs.validate.outputs.artifact-digest`: upload service SHA-256 digest;
-- `needs.validate.outputs.tested-commit`: full tested SHA.
-
-The reviewed SHA-pinned `actions/download-artifact` uses `artifact-ids` set to
-that ID in the current run. Never select latest, rebuild, or trigger another
-workflow. Use the artifact service digest/integrity verification; investigate any
-integrity warning rather than deploying. No separately published checksum asset,
-release ZIP, automatic tag or GitHub Release is produced.
-
-Validation cancels superseded validation jobs only; cancellation is no longer
-workflow-wide. The deployment job uses its own shared, non-cancelling
-production/rollback lock. Ticket 10 owns deployment serialization, stale-build
-rejection, environment approval and production credentials. See
-[Cloudflare deployment preparation](cloudflare-deployment.md) for implemented
-local safeguards and the still-disabled standard-action deployment job. Rerunning
-only a future deployment job must consume its original successful validation output,
-not infer a name from the new attempt number.
-
-Artifacts expire after **seven days** (and may be deleted earlier). Download a
-specific successful run through Actions UI, or:
+Artifacts remain useful for reproduction and SEO audits:
 
 ```sh
 gh run download RUN_ID --name static-FULL_SHA-RUN_ID-ATTEMPT --dir downloaded-site
@@ -117,28 +65,39 @@ pnpm exec tsx scripts/artifact.ts downloaded-site
 pnpm exec tsx scripts/smoke-static.ts downloaded-site
 ```
 
-Use source/tooling from the tested commit for downloaded-artifact verification.
-Do not rebuild over the downloaded directory or filter hidden files. The static
-smoke and audit accept the extracted output root, not an archive. Ticket 11 should
-use these checks on freshly built output or this specific downloaded artifact;
-obsolete historical release ZIPs are not SEO evidence.
+Use tooling from the tested commit. Do not rebuild over a downloaded directory or
+filter away host files. Artifacts may expire or be deleted earlier; a historical Git
+build is not guaranteed byte-identical reconstruction. No automatic tags, GitHub
+Releases, custom ZIP packaging or published checksum assets are used.
 
-Cloudflare deployment history is the proposed routine rollback path, subject to
-ticket 10 confirming product support and retention limits. An expired artifact
-requires a fresh validated build from Git; byte-identical rebuilding is not promised.
+## Cloudflare now builds independently
 
-## Cost and verification boundaries
+The owner replaced the ticket 10 exact-GitHub-artifact handoff with **Cloudflare-native
+Git builds and Worker Previews**. Cloudflare installs the frozen lockfile and runs
+`pnpm run cloudflare:build` (site build + output audit), then its native preview command.
+It does not rerun GitHub's lint/type/unit/browser suite or wait for GitHub checks.
+A preview may be published before or despite a failing GitHub check. Required merge
+checks are therefore essential before later enabling production from master.
 
-Only PRs and master pushes run, superseded validations cancel, pnpm's download
-store is cached by setup-node/lockfile, and artifacts last seven days. No browser
-cache or retained PR artifacts are needed. Standard public-repository hosted
-Actions usage and private-repository included minutes/storage differ; private CI
-is **not** unlimited free usage. Owners must inspect their plan, storage/cache
-usage and billing budgets/stop-spending controls before enabling runs. This ticket
-does not authorize paid usage or change account limits.
+Cloudflare's branch commit and output may differ from GitHub's PR merge revision and
+artifact. Do not claim identity between them. Inspect the provider's own build/commit/
+deployment identity and live site when accepting a preview or launch.
+[Deployment contract](cloudflare-deployment.md) and [owner setup](cloudflare-owner-setup.md)
+contain the exact commands, intentional production blocker, provider limits and recovery.
 
-Locally run `actionlint .github/workflows/validate.yml` after workflow edits.
-Actual event isolation, cache restore, Linux browser installation, cancellation,
-upload retention/digests and rerun output association require GitHub execution;
-local syntax/tests do not prove those service behaviors. Ticket 09 evidence and
-remaining browser launch limitation are in `.scratch/ticket09/VERIFICATION.md`.
+## Ticket 11 handoff and evidence limits
+
+SEO work uses freshly generated output, not an obsolete release ZIP. Verify canonical
+origin `https://susanne-preiss.de`, metadata, sitemap/robots, assets, directory indexes,
+portable alias documents and the generated host rules. After an approved native preview,
+record its exact commit/build/deployment identity and verify actual HTTP redirects,
+queries/fragments, genuine 404s, noindex and media/browser behavior. After production
+activation, repeat the host checks and ensure production is not noindexed. Native
+preview evidence is not evidence of a future custom-domain/TLS/DNS cutover.
+
+Run `actionlint .github/workflows/validate.yml` after workflow changes. Local syntax/
+contract tests cannot prove real GitHub cancellation, artifact retention/integrity or
+Cloudflare build/preview/rollback behavior. Public standard hosted Actions and private
+CI have different allowances; inspect billing/storage limits and avoid paid add-ons.
+Workers Builds has a separate free build-minute budget. No account provisioning,
+settings changes, pushes or deployments are authorized by these docs.
