@@ -81,6 +81,19 @@ console.info(gsap.version, customElements.get('video-player'));
       assert.equal(german('html').attr('lang'), 'de');
       assert.equal(english('html').attr('lang'), 'en');
       assert.equal(english('title').text(), 'English fixture title');
+      assert.equal(english('meta[property="og:title"]').attr('content'), 'English fixture title');
+      assert.equal(
+        english('meta[property="og:description"]').attr('content'),
+        english('meta[name="description"]').attr('content'),
+      );
+      assert.equal(
+        english('meta[property="og:url"]').attr('content'),
+        'https://susanne-preiss.de/about-susanne/',
+      );
+      assert.equal(
+        JSON.parse(english('script[type="application/ld+json"]').text()).url,
+        'https://susanne-preiss.de/about-susanne/',
+      );
       assert.equal(
         english('link[rel="canonical"]').attr('href'),
         'https://susanne-preiss.de/about-susanne/',

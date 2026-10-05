@@ -14,6 +14,15 @@ importers:
       '@astrojs/svelte':
         specifier: 9.0.1
         version: 9.0.1(@types/node@24.10.1)(astro@7.3.5(@types/node@24.10.1)(sass@1.83.1)(terser@5.37.0)(tsx@4.23.15)(yaml@2.9.1))(esbuild@0.28.2)(sass@1.83.1)(svelte@5.57.1)(terser@5.37.0)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      '@fontsource/cormorant-garamond':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/open-sans':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/roboto':
+        specifier: 5.3.0
+        version: 5.3.0
       '@videojs/hlsjs-video':
         specifier: 10.0.1
         version: 10.0.1
@@ -789,6 +798,15 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@fontsource/cormorant-garamond@5.3.0':
+    resolution: {integrity: sha512-weuGsCirGVWBWqpt6YUp0yLThTe4G8YO45noq8wxeJCRvEpq5lFrxNMFSTxcyOyV5k5otzJ8guDzYegdYlcLMQ==}
+
+  '@fontsource/open-sans@5.3.0':
+    resolution: {integrity: sha512-V1bdMlGNyZrJwzrdusshMOw2YR0aqYDL7kOo9dkxUEKl8dFv66A9HLckOOXl572sG/7ohhDQrCrTFGSn9LZcSw==}
+
+  '@fontsource/roboto@5.3.0':
+    resolution: {integrity: sha512-BapRJOWYP+LZ21zp+wBQjfpPYKRoxc4LspJ/RLuI+HSMBD5u/X4O+ESDrSvEqDSy0rAl7GwBJ+09mdc16cVQ1Q==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -4034,6 +4052,12 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@fontsource/cormorant-garamond@5.3.0': {}
+
+  '@fontsource/open-sans@5.3.0': {}
+
+  '@fontsource/roboto@5.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

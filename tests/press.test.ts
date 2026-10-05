@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { load } from 'cheerio';
+import { descriptions } from './fixtures/seo';
 import { assertLegacyAsset } from './legacy-assertions';
 import { assertOptimizedReference, assertOriginalPreserved } from './image-assertions';
 
@@ -14,7 +15,7 @@ test('Presse preserves German copy, ordered resources, metadata and original ass
   assert.equal(after('title').text(), before('title').text());
   assert.equal(
     compact(after('meta[name="description"]').attr('content')!),
-    compact(before('meta[name="description"]').attr('content')!),
+    compact(descriptions['/presse/']!),
   );
   assert.equal(after('link[rel="canonical"]').attr('href'), 'https://susanne-preiss.de/presse/');
   assert.equal(after('[hreflang="en"]').length, 0);

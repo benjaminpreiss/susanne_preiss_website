@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { load } from 'cheerio';
+import { descriptions } from './fixtures/seo';
 import { assertLegacyAsset } from './legacy-assertions';
 import { assertOptimizedReference, assertOriginalPreserved } from './image-assertions';
 import { editorialSchemas } from '../src/lib/content/editorial';
@@ -23,7 +24,7 @@ for (const [legacy, slug] of pages)
       .map((el) => compact(before(el).text()))
       .filter(Boolean);
     const actual = after('main')
-      .find('h1,h2,p')
+      .find('h1,h2,h3,p')
       .toArray()
       .map((el) => compact(after(el).text()))
       .filter(Boolean);
@@ -41,7 +42,7 @@ for (const [legacy, slug] of pages)
           return heading.text().split('|BREAK|').map(compact).filter(Boolean);
         });
     assert.deepEqual(
-      headingLines(after, 'main h1, main h2'),
+      headingLines(after, 'main h1, main h2, main h3'),
       headingLines(before, 'body > .content h3, body > .content h4'),
       'Explicit editorial heading breaks',
     );
@@ -53,10 +54,17 @@ for (const [legacy, slug] of pages)
         `Preserved emphasis: ${before(emphasis).text()}`,
       );
     }
-    assert.equal(after('title').text(), before('title').text());
+    // Ticket 11 corrects the Changemaker metadata copied from Personalentwicklung.
+    // Body-copy, order, heading breaks and media parity remain independently asserted.
+    assert.equal(
+      after('title').text(),
+      legacy === 'changemaker'
+        ? 'Regenerative Changemaker – Susanne Preiss'
+        : before('title').text(),
+    );
     assert.equal(
       compact(after('meta[name="description"]').attr('content')!),
-      compact(before('meta[name="description"]').attr('content')!),
+      compact(descriptions[`/${slug}/`]!),
     );
     assert.equal(after('html').attr('lang'), 'de');
     assert.equal(after('main h1').length, 1);

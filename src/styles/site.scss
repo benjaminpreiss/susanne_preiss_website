@@ -48,7 +48,8 @@ a {
   max-width: 800px;
   position: relative;
   h1,
-  h2 {
+  h2,
+  h3 {
     @include font-size(40px);
     @include margin-top(80px);
     @include margin-bottom(30px);
@@ -58,6 +59,7 @@ a {
   }
   h1,
   h2,
+  h3,
   p {
     @include padding-left(30px);
     @include padding-right(30px);
@@ -405,7 +407,8 @@ a {
   &:has(a:focus-visible) {
     opacity: 0.8;
   }
-  h2 {
+  h2,
+  h3 {
     @include font-size(40px);
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;

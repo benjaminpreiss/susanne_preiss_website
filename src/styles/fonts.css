@@ -1,0 +1,6 @@
+/* Versioned Fontsource faces. Unicode ranges load only the glyph subsets in use.
+   Vite bundles this CSS and emits local, hashed font assets; no runtime font CDN. */
+@import '@fontsource/cormorant-garamond/300-italic.css';
+@import '@fontsource/open-sans/400.css';
+@import '@fontsource/open-sans/600.css';
+@import '@fontsource/roboto/400.css';

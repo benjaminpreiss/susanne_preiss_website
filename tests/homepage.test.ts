@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { load } from 'cheerio';
+import { descriptions } from './fixtures/seo';
 import { assertOptimizedReference } from './image-assertions';
 import { editorialSchemas } from '../src/lib/content/editorial';
 
@@ -24,7 +25,7 @@ test('homepage publishes all eight Markdoc sections with localized destinations 
   const normalize = (value: string) => value.replace(/\s+/g, '');
   assert.equal(
     normalize($('meta[name="description"]').attr('content')!),
-    normalize(legacy('meta[name="description"]').attr('content')!),
+    normalize(descriptions['/']!),
   );
   assert.equal($('link[rel="canonical"]').attr('href'), 'https://susanne-preiss.de/');
   assert.equal($('[hreflang="en"]').length, 0);

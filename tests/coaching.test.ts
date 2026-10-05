@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { load } from 'cheerio';
+import { descriptions } from './fixtures/seo';
 import { assertOptimizedReference, assertOriginalPreserved } from './image-assertions';
 
 const pages = [
@@ -28,7 +29,7 @@ for (const [legacy, slug] of pages)
     assert.equal(after('title').text(), before('title').text());
     assert.equal(
       compact(after('meta[name="description"]').attr('content')!),
-      compact(before('meta[name="description"]').attr('content')!),
+      compact(descriptions[`/${slug}/`]!),
     );
     assert.equal(after('html').attr('lang'), 'de');
     assert.equal(after('main h1').length, 1);

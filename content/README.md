@@ -73,6 +73,28 @@ nicht `<br>`. Für eine ausgeschriebene nummerierte Absatzzeile statt einer List
 `1\. Text`. Listen verwenden `- Text` bzw. `1. Text`. Anführungszeichen und Satzzeichen
 werden nicht automatisch typografisch verändert.
 
+### Strukturierte Daten für Leistungen und Kurse
+
+Passende Seiten unter `pages/` können zusätzlich im Kopfbereich ein ausdrücklich
+geprüftes Angebot beschreiben:
+
+```yaml
+structuredData:
+  type: Service
+  name: 'Business Coaching'
+  description: 'Eine sachliche Zusammenfassung des auf dieser Seite beschriebenen Angebots.'
+```
+
+Erlaubt sind `Service` für Leistungen und `Course` für ein beschriebenes Lernprogramm.
+`name` und `description` müssen durch den sichtbaren Seiteninhalt belegt und in der
+Sprache der Seite verfasst sein. Der Anbieter ist hier ausschließlich Susanne Preiss;
+fremde Angebote dürfen so nicht ausgezeichnet werden. Für Startseite und About wird
+stattdessen automatisch `WebSite` beziehungsweise `Person` ausgegeben.
+Keine Bewertungen, Preise, Termine, Verfügbarkeit oder Abschlüsse ergänzen, die nicht
+belegt sind. Ein Kurs ohne Termine ist kein angekündigtes `Event`. Das Feld ist
+optional und erscheint nicht als neuer sichtbarer Text. Strukturierte Daten garantieren
+keine besondere Darstellung in Suchergebnissen.
+
 ## Abschnitte im Seitenkörper anordnen
 
 Markdoc verbindet Text mit wenigen benannten Bausteinen. Zum Umordnen verschieben

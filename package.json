@@ -30,6 +30,9 @@
   "dependencies": {
     "@astrojs/markdoc": "2.0.9",
     "@astrojs/svelte": "9.0.1",
+    "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/open-sans": "5.3.0",
+    "@fontsource/roboto": "5.3.0",
     "@videojs/hlsjs-video": "10.0.1",
     "@videojs/html": "10.0.1",
     "astro": "7.3.5",
