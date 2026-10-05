@@ -32,11 +32,13 @@ and check upstream Astro/Markdoc/Vite fixes.
 
 - The parent-checkout `astro/tsconfigs/strict` resolution warning did not reproduce
   in the captured baseline or subsequent builds. No tsconfig workaround was added.
-- The >500 kB warning is the VideoPlayer bundle, not navigation: the baseline was
-  888,634 bytes minified (242,961 bytes gzip). It includes the full hls.js playback
-  engine. No engine replacement, artificial splitting, size-threshold increase or
-  navigation-loading change was made. Further optimization needs playback-feature
-  and loading-behaviour verification.
+- The >500 kB warning concerns the full video playback runtime, not navigation.
+  The baseline player bundle was 888,634 bytes minified (242,961 bytes gzip).
+  A small eager Svelte shell now reserves the cover layout; it dynamically imports
+  `src/interactions/video-runtime.ts` within 400px of the viewport. The full engine
+  and controls are retained, so the deferred runtime still exceeds the warning
+  threshold. No warning suppression or navigation-loading change was made.
+  See `docs/video-loading.md` for behaviour and verification.
 - The pnpm warning about reading `~/.npmrc` is a local nono sandbox restriction,
   independent of Astro/Sass. Build configuration does not suppress it.
 

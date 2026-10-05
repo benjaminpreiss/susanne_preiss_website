@@ -55,6 +55,17 @@ test('base shorthand overrides precede responsive breakpoint overrides', () => {
   );
 });
 
+test('portrait homepage tiles use dynamic minimum heights without clipping text', () => {
+  const css = compact(compile('src/styles/homepage.scss').css);
+  assert.match(
+    css,
+    /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100dvh;/,
+  );
+  assert.match(css, /\.home-image\{min-height:50dvh;/);
+  assert.match(css, /\.home-copy\{min-height:50dvh;/);
+  assert.match(css, /\.home-intro\.home-image\{order:-1;flex:1050dvh;/);
+});
+
 test('unsupported responsive values fail explicitly', () => {
   for (const value of ['auto', '2rem', '-10px', '40']) {
     assert.throws(() => render(`font-size: ${value}`), /non-negative px values or zero/);

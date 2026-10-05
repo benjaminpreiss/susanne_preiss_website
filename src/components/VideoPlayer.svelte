@@ -1,10 +1,5 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import '@videojs/html/video/player';
-  import '@videojs/html/video/compat-skin';
-  import '@videojs/html/media/hlsjs-video';
-  import '@videojs/html/i18n';
-  import '@videojs/html/i18n/locales/de/register';
   import type { VideoPlayerElement } from '@videojs/html/video';
   import type { HlsJsVideoElement } from '@videojs/html/media/hlsjs-video';
   import type { Locale } from '../lib/content/schema';
@@ -29,6 +24,8 @@
   }
   let { media, locale, strings }: Props = $props();
   let enhanced = $state(false);
+  let runtimeReady = $state(false);
+  let container = $state<HTMLDivElement>();
   let started = $state(false);
   let failure = $state(false);
   let ready = $state(false);
@@ -39,6 +36,28 @@
 
   onMount(() => {
     enhanced = true;
+    let disposed = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+        void import('../interactions/video-runtime')
+          .then(() => {
+            if (!disposed) runtimeReady = true;
+          })
+          .catch(() => {
+            if (disposed) return;
+            failure = true;
+            enhanced = false; // Restore native controls if the runtime cannot load.
+          });
+      },
+      { rootMargin: '400px' },
+    );
+    if (container) observer.observe(container);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+    };
   });
 
   // Svelte owns light DOM; each v10 component owns its shadow DOM and engine.
@@ -104,38 +123,47 @@
 
 <svelte:window onpagehide={() => playback?.pause()} />
 
-<div class="media-player" data-enhanced={enhanced || undefined} data-started={started || undefined}>
+<div
+  bind:this={container}
+  class="media-player"
+  data-enhanced={enhanced || undefined}
+  data-started={started || undefined}
+>
   {#if enhanced}
-    <media-i18n lang={locale}>
-      {#key `${media.src}:${attempt}`}
-        <video-player bind:this={player} poster={media.poster} {@attach observePlayer}>
-          <video-compat-skin inert={!started}>
-            <hlsjs-video
-              bind:this={playback}
-              src={media.src}
-              playsinline
-              preload="auto"
-              crossorigin="anonymous"
-              lang={media.mediaLocale}
-              aria-label={media.title}
-              tabindex="-1"
-              onended={restoreCover}
-              onerror={failed}
-              {@attach mediaLifecycle}
-            >
-              {#if media.captionSrc}
-                <track
-                  kind="captions"
-                  src={media.captionSrc}
-                  srclang={media.captionLocale}
-                  label={media.captionLabel}
-                />
-              {/if}
-            </hlsjs-video>
-          </video-compat-skin>
-        </video-player>
-      {/key}
-    </media-i18n>
+    {#if runtimeReady}
+      <div class="video-surface">
+        <media-i18n lang={locale}>
+          {#key `${media.src}:${attempt}`}
+            <video-player bind:this={player} poster={media.poster} {@attach observePlayer}>
+              <video-compat-skin inert={!started}>
+                <hlsjs-video
+                  bind:this={playback}
+                  src={media.src}
+                  playsinline
+                  preload="auto"
+                  crossorigin="anonymous"
+                  lang={media.mediaLocale}
+                  aria-label={media.title}
+                  tabindex="-1"
+                  onended={restoreCover}
+                  onerror={failed}
+                  {@attach mediaLifecycle}
+                >
+                  {#if media.captionSrc}
+                    <track
+                      kind="captions"
+                      src={media.captionSrc}
+                      srclang={media.captionLocale}
+                      label={media.captionLabel}
+                    />
+                  {/if}
+                </hlsjs-video>
+              </video-compat-skin>
+            </video-player>
+          {/key}
+        </media-i18n>
+      </div>
+    {/if}
     {#if media.poster}<img class="video-initial-poster" src={media.poster} alt="" />{/if}
     <div class="video-launch" inert={started}>
       <button

@@ -121,7 +121,19 @@ a {
   }
   .media-player[data-enhanced] {
     height: 80vmin;
+    background: #efeae3;
+  }
+  .video-surface {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
     background: black;
+  }
+  .media-player[data-started] .video-surface {
+    opacity: 1;
+    pointer-events: auto;
   }
   media-i18n,
   video-compat-skin {
@@ -141,6 +153,7 @@ a {
     visibility: visible;
   }
   .video-initial-poster {
+    z-index: 1;
     position: absolute;
     inset: 0;
     width: 100%;
@@ -153,6 +166,7 @@ a {
   }
   .video-frame:has([data-enhanced]) {
     .video-title {
+      z-index: 2;
       position: absolute;
       inset: 0 50% 0 0;
       display: flex;
@@ -195,6 +209,7 @@ a {
     }
   }
   .video-launch {
+    z-index: 3;
     position: absolute;
     inset: 0 0 0 50%;
     display: flex;
@@ -211,6 +226,9 @@ a {
     max-width: 60%;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
+  }
+  .video-play:disabled {
+    cursor: progress;
   }
   .video-play:hover,
   .video-play:focus-visible {
@@ -240,6 +258,7 @@ a {
         font-weight: 600;
       }
       .video-cover-image {
+        z-index: 2;
         display: block;
         position: absolute;
         inset: 0 50% 0 0;
@@ -252,7 +271,7 @@ a {
     }
     .video-launch {
       inset: 0 50% 0 0;
-      z-index: 1;
+      z-index: 3;
     }
     .video-frame:has([data-started]) {
       .video-title {
@@ -268,7 +287,7 @@ a {
     position: absolute;
     bottom: 0;
     inset-inline: 0;
-    z-index: 2;
+    z-index: 4;
     padding: 1rem;
     background: #efeae3;
     font:

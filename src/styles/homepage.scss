@@ -273,26 +273,40 @@ html[data-page-kind='home'] {
   }
 }
 @media (max-aspect-ratio: 1/1) {
+  html[data-page-kind='home'][data-home-section='changemaker'] .site-header .menu {
+    color: #efeae3;
+  }
+  html[data-page-kind='home']:is(
+      [data-home-section='nachhaltigkeit'],
+      [data-home-section='speaker']
+    )
+    .site-header
+    .menu {
+    color: #2b2c36;
+  }
   html[data-page-kind='home'][data-home-tone] .site-footer {
     color: #000;
   }
   .home-section,
   .home-section.image-right {
     flex-direction: column;
+    // Follow the visible viewport as mobile browser chrome expands/retracts.
+    // Keep a minimum, rather than a fixed height, so long/zoomed text can grow.
+    min-height: 100dvh;
     .home-panel {
       width: 100%;
     }
     .home-image {
-      min-height: 50svh;
+      min-height: 50dvh;
     }
     .home-copy {
-      min-height: 50svh;
+      min-height: 50dvh;
     }
   }
   .home-intro {
     .home-image {
       order: -1;
-      flex: 1 0 50svh;
+      flex: 1 0 50dvh;
     }
     .home-copy {
       flex: 1 0 auto;
