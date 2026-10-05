@@ -1,0 +1,28 @@
+@use 'sass:map';
+@use '@fontsource/cormorant-garamond/scss' as cormorant;
+@use '@fontsource/open-sans/scss' as open-sans;
+@use '@fontsource/roboto/scss' as roboto;
+
+// Use Fontsource's versioned metadata without its all-subset CSS or deprecated
+// Sass mixins. Preserve the provider's Unicode ranges, names and font binaries.
+@mixin faces($metadata, $weights, $style: normal) {
+  $id: map.get($metadata, id);
+  @each $subset in latin-ext, latin {
+    @each $weight in $weights {
+      @font-face {
+        font-family: map.get($metadata, family);
+        font-style: $style;
+        font-weight: $weight;
+        font-display: swap;
+        // Small font files must not become base64 in render-blocking CSS.
+        src: url('@fontsource/#{$id}/files/#{$id}-#{$subset}-#{$weight}-#{$style}.woff2?no-inline')
+          format('woff2');
+        unicode-range: map.get($metadata, unicode, $subset);
+      }
+    }
+  }
+}
+
+@include faces(cormorant.$metadata, 300, italic);
+@include faces(open-sans.$metadata, (400, 600));
+@include faces(roboto.$metadata, 400);
