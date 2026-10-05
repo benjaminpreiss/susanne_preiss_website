@@ -1,0 +1,29 @@
+{
+  "menu": "Menu",
+  "home": "Home",
+  "sectionNavigation": "Homepage sections",
+  "contact": "Contact",
+  "imprint": "Legal notice",
+  "privacy": "Privacy",
+  "close": "Close",
+  "back": "Back",
+  "language": "Language",
+  "play": "Play",
+  "pause": "Pause",
+  "videoUnavailable": "The video could not be played. Please try again.",
+  "videoNoScript": "Enable JavaScript if your browser cannot play this video directly.",
+  "transcript": "Transcript",
+  "navigation": {
+    "home": "HOME",
+    "online-training": "ONLINE TRAINING",
+    "workshops": "WORKSHOPS",
+    "people-development": "PEOPLE DEVELOPMENT",
+    "changemaker": "REGENERATIVE FRAMEWORK",
+    "sustainability": "SUSTAINABILITY",
+    "business-coaching": "BUSINESS COACHING",
+    "executive-sparring": "EXECUTIVE SPARRING",
+    "speaking": "KEYNOTE SPEAKER",
+    "about": "ABOUT",
+    "press": "PRESS"
+  }
+}

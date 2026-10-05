@@ -1,0 +1,19 @@
+# Dependencies, generated output, and local evidence
+node_modules/
+dist/
+.astro/
+.pnpm-store/
+.git/
+.husky/_/
+.fixture-*/
+.scratch/
+# Agent tooling is maintained independently of site quality tooling
+.agents/
+.pi/
+AGENTS.md
+skills-lock.json
+# Immutable legacy parity evidence and copied public assets
+tests/fixtures/legacy/
+public/
+# Package-manager-owned generated file
+pnpm-lock.yaml

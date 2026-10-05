@@ -1,0 +1,306 @@
+@import 'rfs/scss';
+$rfs-two-dimensional: true;
+
+html[data-page-kind='home'] {
+  // Always settle on a section; native snapping still permits scrolling inside tall sections.
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  // Transformed snap areas must not rewrite Astro's saved scroll position.
+  &[data-route-phase],
+  &:has(dialog[open]) {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+  overflow-x: clip;
+  main.content {
+    padding-bottom: 0;
+  }
+  // Without JS this navigation is a real scroll destination, not skipped by mandatory snapping.
+  .no-script-navigation {
+    scroll-snap-align: start;
+  }
+  .site-header,
+  .site-footer {
+    transition:
+      opacity 0.4s,
+      color 0.4s;
+  }
+  .site-header .menu {
+    transition: color 0.4s;
+  }
+  &[data-route-phase],
+  &:has(dialog[open]) {
+    .site-header,
+    .site-footer,
+    .site-header .menu,
+    .section-controls a::after {
+      transition: none;
+    }
+  }
+  .site-footer {
+    background: transparent;
+  }
+  &[data-home-tone='dark'] {
+    .site-header .menu {
+      color: #2b2c36;
+    }
+    .site-footer {
+      color: #000;
+    }
+  }
+  &[data-home-tone='light'] {
+    .site-header .menu,
+    .site-footer {
+      color: #efeae3;
+    }
+  }
+  &[data-home-section='greatness'] {
+    .site-header,
+    .site-footer {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .site-header button,
+    .site-header a {
+      pointer-events: none;
+    }
+    // Focus restored after a pointer-driven menu close is not a request to reveal the controls.
+    &[data-input-modality='keyboard'] {
+      .site-header:focus-within,
+      .site-footer:focus-within {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .site-header:focus-within button,
+      .site-header:focus-within a {
+        pointer-events: auto;
+      }
+    }
+  }
+}
+.home-section {
+  display: flex;
+  position: relative;
+  min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  &.image-right {
+    flex-direction: row-reverse;
+  }
+  .home-panel {
+    width: 50%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .home-image {
+    position: relative;
+    overflow: hidden;
+  }
+  picture {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
+  img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .home-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 70px 0;
+  }
+  h1,
+  h2,
+  p,
+  .home-arrow {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 0.85;
+  }
+  h1,
+  h2 {
+    @include font-size(73px);
+    margin: 0;
+    @include margin-left(40px);
+    @include margin-right(40px);
+  }
+  p {
+    @include font-size(50px);
+    @include margin(40px);
+    margin-bottom: 0;
+  }
+  .home-arrow {
+    display: block;
+    @include font-size(118px);
+    text-align: center;
+    width: 85%;
+  }
+}
+.home-tile-link {
+  display: block;
+  max-width: 100%;
+  touch-action: manipulation;
+}
+.home-intro {
+  .home-copy {
+    padding: 0;
+    overflow: clip;
+  }
+  .home-text {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+  }
+  h1 {
+    color: #67994f;
+    @include margin-top(60px);
+    @include margin-left(120px);
+    @include margin-right(120px);
+  }
+  p {
+    color: #87613e;
+    @include margin-left(120px);
+    @include margin-right(120px);
+    margin-bottom: 0;
+  }
+  img {
+    object-position: center center;
+  }
+}
+.home-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  @include margin-top(60px);
+  height: 8vh;
+  min-height: 10vmin;
+  background: url('/svg/SP_logo_web.svg') no-repeat center / contain;
+  width: 277px;
+  max-width: 70%;
+  margin-inline: auto;
+}
+.home-section[data-home-section='workshops'],
+.home-section[data-home-section='nachhaltigkeit'],
+.home-section[data-home-section='management'] {
+  img {
+    object-position: center center;
+  }
+}
+.home-section[data-home-section='business'] img {
+  object-position: right top;
+}
+.home-section[data-home-section='changemaker'] {
+  .home-arrow {
+    display: none;
+  }
+  p::after {
+    content: '';
+    display: inline-block;
+    height: 0.5em;
+    width: 0.9em;
+    margin-left: 0.2em;
+    background: #000;
+    mask: url('/svg/SP_Website_Pfeil2.svg') center / contain no-repeat;
+  }
+}
+.section-controls {
+  position: fixed;
+  right: 17px;
+  top: 50%;
+  translate: 0 -50%;
+  z-index: 2;
+  color: #333;
+  &[data-tone='light'] {
+    color: #efeae3;
+  }
+  a {
+    display: block;
+    position: relative;
+    width: 24px;
+    height: 20px;
+    color: inherit;
+  }
+  a::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    transition:
+      width 0.2s,
+      height 0.2s,
+      background-color 0.4s;
+  }
+  a[aria-current]::after,
+  a:hover::after,
+  a:focus-visible::after {
+    width: 12px;
+    height: 12px;
+  }
+}
+@media (max-aspect-ratio: 1/1) {
+  html[data-page-kind='home'][data-home-tone] .site-footer {
+    color: #000;
+  }
+  .home-section,
+  .home-section.image-right {
+    flex-direction: column;
+    .home-panel {
+      width: 100%;
+    }
+    .home-image {
+      min-height: 50svh;
+    }
+    .home-copy {
+      min-height: 50svh;
+    }
+  }
+  .home-intro {
+    .home-image {
+      order: -1;
+      flex: 1 0 50svh;
+    }
+    .home-copy {
+      flex: 1 0 auto;
+      min-height: auto;
+    }
+    img {
+      object-position: center top;
+    }
+    .scroll-hint {
+      display: none;
+    }
+  }
+  .section-controls {
+    display: none;
+  }
+}
+@media (max-height: 500px) {
+  .home-logo,
+  .home-intro .scroll-hint,
+  .section-controls {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-page-kind='home'] {
+    scroll-behavior: auto;
+  }
+  html[data-page-kind='home'] .site-header,
+  html[data-page-kind='home'] .site-footer,
+  html[data-page-kind='home'] .site-header .menu,
+  .section-controls a::after {
+    transition: none;
+  }
+}

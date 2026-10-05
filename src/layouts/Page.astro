@@ -1,0 +1,120 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { ClientRouter } from 'astro:transitions';
+import { publishedContent } from '../lib/content/published';
+import { ui } from '../lib/content/ui';
+import { navigationModel } from '../lib/content/navigation';
+import Navigation from '../components/Navigation.svelte';
+import '../styles/site.scss';
+import '../styles/homepage.scss';
+interface Props {
+  entry: CollectionEntry<'pages'> | CollectionEntry<'shared'>;
+}
+const { entry } = Astro.props;
+const { data } = entry;
+const routes = await publishedContent(Astro.site);
+const strings = ui[data.locale];
+if (!strings) throw new Error(`Missing UI: ${data.locale}`);
+const navigation = navigationModel(routes, data.translationKey, data.locale, strings);
+---
+
+<!doctype html>
+<html
+  lang={data.locale}
+  transition:animate="none"
+  data-home-section={data.translationKey === 'home' ? 'greatness' : undefined}
+  data-home-tone={data.translationKey === 'home' ? 'dark' : undefined}
+  data-page-kind={
+    data.translationKey === 'home' ? 'home' : navigation.isUtility ? 'utility' : 'content'
+  }
+>
+  <head>
+    <meta charset="UTF-8" />
+    {data.translationKey === 'home' && <script is:inline>
+      // Run before ClientRouter reads its saved scroll coordinates. Client-side
+      // returns and Back/Forward restoration are not reloads and remain untouched.
+      if (
+        document.readyState === 'loading' &&
+        /** @type {PerformanceNavigationTiming | undefined} */ (
+          performance.getEntriesByType('navigation')[0]
+        )?.type === 'reload'
+      ) {
+        if (!location.hash) {
+          history.scrollRestoration = 'manual';
+          if (history.state) history.replaceState({ ...history.state, scrollX: 0, scrollY: 0 }, '');
+          scrollTo(0, 0);
+        } else {
+          // An explicit fragment wins over stale router coordinates on reload.
+          addEventListener(
+            'load',
+            () => {
+              try {
+                document
+                  .getElementById(decodeURIComponent(location.hash.slice(1)))
+                  ?.scrollIntoView({ behavior: 'instant' });
+              } catch {
+                /* Malformed fragments must not break page initialization. */
+              }
+            },
+            { once: true },
+          );
+        }
+      }
+    </script>}
+    <ClientRouter fallback="swap" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{data.title}</title>
+    <meta name="description" content={data.description} />
+    <link rel="canonical" href={routes.canonical(data.translationKey, data.locale)} />
+    {routes.alternates(data.translationKey).map((alternate) => (
+      <link rel="alternate" hreflang={alternate.locale} href={alternate.href} />
+    ))}
+    <link
+      href="https://fonts.googleapis.com/css?family=Cormorant+Garamond:300i&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+  </head>
+  <body
+    data-route-path={Astro.url.pathname}
+    data-locale={data.locale}
+    data-utility={navigation.isUtility ? 'true' : undefined}
+    data-published-paths={JSON.stringify(
+      routes.published
+        .filter((item) => item.data.locale === data.locale)
+        .map((item) => routes.path(item.data)),
+    )}
+  >
+    <Navigation
+      client:load
+      {strings}
+      {navigation}
+      isHome={data.translationKey === 'home'}
+      heroTone={'heroTone' in data ? data.heroTone : undefined}
+    />
+    <noscript>
+      <nav class="no-script-navigation" aria-label={strings.menu}>
+        {[...navigation.links, navigation.footer.primary, ...navigation.footer.legal].map(
+          (link) => (
+            <a href={link.href}>{link.label}</a>
+          ),
+        )}
+      </nav>
+    </noscript>
+    <main tabindex="-1" class:list={['content', { 'utility-content': navigation.isUtility }]}>
+      <slot />
+    </main>
+    <script>
+      import { installPageNavigation } from '../interactions/navigation';
+      installPageNavigation(document);
+    </script>
+  </body>
+</html>

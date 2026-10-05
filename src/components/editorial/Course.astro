@@ -1,0 +1,27 @@
+---
+import ResponsiveImage from '../ResponsiveImage.astro';
+import type { CourseProps } from '../../lib/content/editorial';
+import { editorialDestination } from '../../lib/content/destination';
+import { localeSchema } from '../../lib/content/schema';
+type Props = CourseProps;
+const { key, destination, image, alt, side = 'left' } = Astro.props;
+const href = await editorialDestination(
+  destination,
+  localeSchema.parse(Astro.locals.contentLocale),
+  Astro.site,
+);
+const external = !destination.startsWith('content:');
+---
+
+<section class="course-panel" data-section-key={key}>
+  <ResponsiveImage src={image} alt={alt} sizes="100vw" />
+  <div class={`course-cover cover-${side}`}>
+    <a
+      href={href}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noreferrer noopener' : undefined}
+    >
+      <slot />
+    </a>
+  </div>
+</section>

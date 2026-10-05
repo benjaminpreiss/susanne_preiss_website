@@ -1,0 +1,8 @@
+---
+import { redirectDocument } from '../lib/content/redirect';
+interface Props {
+  destination: string;
+}
+---
+
+<Fragment set:html={redirectDocument(Astro.props.destination, Astro.site)} />

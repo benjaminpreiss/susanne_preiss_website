@@ -1,0 +1,12 @@
+---
+import type { HeadingProps } from '../../lib/content/editorial';
+type Props = HeadingProps;
+const { key, centered } = Astro.props;
+---
+
+<section
+  class:list={['prose', 'editorial-section', 'editorial-heading', { 'centered-heading': centered }]}
+  data-section-key={key}
+>
+  <slot />
+</section>

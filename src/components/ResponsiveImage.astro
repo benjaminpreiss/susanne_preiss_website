@@ -1,0 +1,104 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import { imageAsset, imageWidths } from '../lib/images';
+interface Props {
+  src: string;
+  alt: string;
+  sizes: string;
+  mobileSrc?: string;
+  maxWidth?: number;
+  coverHeightVh?: number;
+  loading?: 'eager' | 'lazy';
+  fetchpriority?: 'high' | 'auto' | 'low';
+  style?: string;
+  class?: string;
+}
+const {
+  src: reference,
+  mobileSrc,
+  maxWidth,
+  coverHeightVh,
+  loading = 'lazy',
+  ...attributes
+} = Astro.props;
+const src = imageAsset(reference);
+// A wide image cropped into a tall hero needs more pixels than its element width.
+if (coverHeightVh && typeof src !== 'string')
+  attributes.sizes = `max(100vw, ${((coverHeightVh * src.width) / src.height).toFixed(2)}vh)`;
+const mobile = mobileSrc ? imageAsset(mobileSrc) : undefined;
+const widths = typeof src === 'string' ? undefined : imageWidths(src, maxWidth);
+// Art direction needs media-qualified sources before *all* desktop formats.
+const mobileSources =
+  mobile && typeof mobile !== 'string'
+    ? await Promise.all(
+        (['avif', 'webp', mobile.format === 'png' ? 'png' : 'jpg'] as const).map((format) =>
+          getImage({
+            src: mobile,
+            width: imageWidths(mobile, maxWidth).at(-1),
+            widths: imageWidths(mobile, maxWidth),
+            format,
+            quality: 50,
+          }),
+        ),
+      )
+    : [];
+const desktopSources =
+  mobile && typeof src !== 'string'
+    ? await Promise.all(
+        (['avif', 'webp', src.format === 'png' ? 'png' : 'jpg'] as const).map((format) =>
+          getImage({ src, width: widths?.at(-1), widths, format, quality: 50 }),
+        ),
+      )
+    : [];
+const fallback = desktopSources.at(-1);
+---
+
+{typeof src === 'string' ? (
+  <img src={src} {...attributes} loading={loading} />
+) : fallback ? (
+  <picture class="responsive-image">
+    {typeof mobile === 'string' && <source media="(max-aspect-ratio: 1/1)" srcset={mobile} />}
+    {mobileSources.map((image) => (
+      <source
+        media="(max-aspect-ratio: 1/1)"
+        type={`image/${image.options.format === 'jpg' ? 'jpeg' : image.options.format}`}
+        srcset={image.srcSet.attribute}
+        sizes={attributes.sizes}
+      />
+    ))}
+    {desktopSources.slice(0, -1).map((image) => (
+      <source
+        type={`image/${image.options.format}`}
+        srcset={image.srcSet.attribute}
+        sizes={attributes.sizes}
+      />
+    ))}
+    <img
+      {...{
+        ...fallback.attributes,
+        src: fallback.src,
+        srcset: fallback.srcSet.attribute,
+        ...attributes,
+        loading,
+        decoding: 'async',
+      }}
+    />
+  </picture>
+) : (
+  <Picture
+    src={src}
+    width={widths?.at(-1)}
+    formats={['avif', 'webp']}
+    fallbackFormat={src.format === 'png' ? 'png' : 'jpg'}
+    widths={widths}
+    quality={50}
+    {...attributes}
+    loading={loading}
+    pictureAttributes={{ class: 'responsive-image' }}
+  />
+)}
+<style is:global>
+  picture.responsive-image {
+    display: contents;
+  }
+</style>
