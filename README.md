@@ -30,6 +30,8 @@ Installation enables Husky pre-commit checks: staged formatting/lint fixes, then
 `pnpm typecheck`. CI uses `HUSKY=0 pnpm install --frozen-lockfile` and runs checks
 explicitly. See [quality tooling](docs/quality-tooling.md) for commands, exact file
 coverage (including Astro/Markdoc fallbacks), exclusions and troubleshooting.
+See [static CI and artifact handoff](docs/static-validation.md) for browser smoke
+checks, seven-day tested master artifacts, download verification and hosting limits.
 
 ## Editorial content and publication
 

@@ -17,6 +17,8 @@
     "format": "oxfmt --write --ignore-path .qualityignore . && prettier --write --ignore-path .qualityignore \"**/*.astro\" && tsx scripts/format-markdoc.ts --write",
     "prepare": "husky",
     "test": "tsx --test tests/*.test.ts",
+    "artifact:check": "tsx scripts/artifact.ts",
+    "smoke:static": "tsx scripts/smoke-static.ts",
     "test:browser": "tsx tests/browser.ts",
     "test:navigation": "tsx tests/router-browser.ts",
     "test:authored-paths": "tsx tests/authored-browser.ts",
