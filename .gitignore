@@ -7,3 +7,4 @@ src/vid
 .env
 .pnpm-store/
 .husky/_/
+/.scratch/
