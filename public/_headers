@@ -1,0 +1,3 @@
+# Keep temporary workers.dev hosts out of search results without noindexing production.
+https://:worker.:account.workers.dev/*
+  X-Robots-Tag: noindex

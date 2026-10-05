@@ -19,6 +19,9 @@
     "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
     "artifact:check": "tsx scripts/artifact.ts",
     "smoke:static": "tsx scripts/smoke-static.ts",
+    "cloudflare:build": "pnpm build && pnpm artifact:check",
+    "cloudflare:preview": "wrangler preview",
+    "cloudflare:production": "node -e \"console.error('Production deployment is disabled. See docs/cloudflare-deployment.md before activation.'); process.exit(1)\"",
     "test:browser": "tsx tests/browser.ts",
     "test:navigation": "tsx tests/router-browser.ts",
     "test:authored-paths": "tsx tests/authored-browser.ts",
@@ -52,7 +55,8 @@
     "sass": "1.83.1",
     "svelte-check": "4.7.6",
     "tsx": "4.23.15",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wrangler": "4.147.0"
   },
   "version": "1.0.0",
   "packageManager": "pnpm@10.8.0"

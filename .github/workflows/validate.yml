@@ -8,22 +8,18 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: validation-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 env:
   HUSKY: '0'
   ASTRO_TELEMETRY_DISABLED: '1'
 
 jobs:
   validate:
+    # Cloudflare owns deployment; cancel only superseded GitHub validation.
+    concurrency:
+      group: validation-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    outputs:
-      artifact-id: ${{ steps.upload.outputs.artifact-id }}
-      artifact-name: ${{ steps.identity.outputs.name }}
-      tested-commit: ${{ steps.identity.outputs.commit }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -53,10 +49,8 @@ jobs:
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           test "$(git rev-parse HEAD)" = "$TESTED_SHA"
-          echo "commit=$TESTED_SHA" >> "$GITHUB_OUTPUT"
           echo "name=static-$TESTED_SHA-$RUN_ID-$RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
-      - name: Retain tested master output
-        id: upload
+      - name: Retain tested master output for inspection, not deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
