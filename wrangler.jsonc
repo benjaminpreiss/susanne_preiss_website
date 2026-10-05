@@ -6,6 +6,7 @@
   // No live production hostname until the owner configures a custom domain.
   // Native Worker Previews have their own URLs and do not promote production.
   "workers_dev": false,
+  "preview_urls": true,
   "assets": {
     "directory": "./dist",
     "html_handling": "force-trailing-slash",

@@ -16,6 +16,7 @@ test('native Worker Previews use static assets without account identifiers, DNS 
     name: 'susanne-preiss',
     compatibility_date: '2026-10-05',
     workers_dev: false,
+    preview_urls: true,
     assets: {
       directory: './dist',
       html_handling: 'force-trailing-slash',
