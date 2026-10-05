@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cp, mkdtemp, readFile, writeFile, rm, access } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { buildFixture, seedImageCache } from './fixture-build';
 import { load } from 'cheerio';
 import { english } from './fixtures/ui';
 
@@ -11,12 +11,7 @@ test(
   { timeout: 300_000 },
   async () => {
     const fixture = await mkdtemp(resolve('.fixture-paths-'));
-    const build = () =>
-      spawnSync(process.execPath, [resolve('node_modules/astro/bin/astro.mjs'), 'build'], {
-        cwd: fixture,
-        encoding: 'utf8',
-        timeout: 120_000,
-      });
+    const build = () => buildFixture(fixture);
     const html = async (file: string) => load(await readFile(join(fixture, 'dist', file), 'utf8'));
     const success = () => {
       const result = build();
@@ -39,6 +34,7 @@ test(
         'svelte.config.js',
       ])
         await cp(resolve(name), join(fixture, name), { recursive: true });
+      await seedImageCache(fixture);
       const dictionary = join(fixture, 'content/ui.json');
       await writeFile(
         dictionary,

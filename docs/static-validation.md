@@ -27,7 +27,14 @@ pnpm smoke:static
 
 The formatting/lint/type commands are shared with local tooling; CI never fixes
 files. See [coverage and narrow Astro/Markdoc fallbacks](quality-tooling.md).
-Tests require a fresh build. The build validates editorial schemas, references,
+Tests require a fresh build. Test files run serially to avoid competing image encoders
+on small CI runners. Isolated build fixtures copy only `node_modules/.astro/assets`
+from that build into their own caches; content stores, generated HTML and source
+remain isolated. Astro still validates transformation cache keys and generates any
+new image variants. The 120-second per-build timeout remains enforced, with explicit
+process-error diagnostics (including for expected-failure content tests).
+
+The build validates editorial schemas, references,
 local assets, published routes and links; fixture tests exercise unpublished and
 translated content. LFS checkout is enabled even though the current output needs
 no LFS pointers. Unresolved pointers in output fail the artifact audit.

@@ -16,7 +16,7 @@
     "format:check": "oxfmt --check --ignore-path .qualityignore . && prettier --check --ignore-path .qualityignore \"**/*.astro\" && tsx scripts/format-markdoc.ts --check",
     "format": "oxfmt --write --ignore-path .qualityignore . && prettier --write --ignore-path .qualityignore \"**/*.astro\" && tsx scripts/format-markdoc.ts --write",
     "prepare": "husky",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "tsx --test --test-concurrency=1 tests/*.test.ts",
     "artifact:check": "tsx scripts/artifact.ts",
     "smoke:static": "tsx scripts/smoke-static.ts",
     "test:browser": "tsx tests/browser.ts",

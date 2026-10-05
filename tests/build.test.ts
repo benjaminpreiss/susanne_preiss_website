@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { load } from 'cheerio';
 import sharp from 'sharp';
 import { english as englishStrings } from './fixtures/ui';
+import { buildFixture, seedImageCache } from './fixture-build';
 
 // Build actual Astro HTML in a disposable sibling root. Never modify production content.
 test(
@@ -13,14 +14,7 @@ test(
   { timeout: 360_000 },
   async (t) => {
     const fixture = await mkdtemp(resolve('.fixture-'));
-    const astro = resolve('node_modules/astro/bin/astro.mjs');
-    const build = () =>
-      spawnSync(process.execPath, [astro, 'build'], {
-        cwd: fixture,
-        encoding: 'utf8',
-        timeout: 120_000,
-        env: { ...process.env, ASTRO_TELEMETRY_DISABLED: '1' },
-      });
+    const build = () => buildFixture(fixture);
     const html = async (path: string) => load(await readFile(join(fixture, 'dist', path), 'utf8'));
     const validate = () =>
       spawnSync(
@@ -40,6 +34,7 @@ test(
         'svelte.config.js',
       ])
         await cp(resolve(name), join(fixture, name), { recursive: true });
+      await seedImageCache(fixture);
       // Workshops now has production editorial sections; keep its real German entry.
       await cp(resolve('tests/fixtures/pages/en'), join(fixture, 'content/pages/en'), {
         recursive: true,
