@@ -1,17 +1,16 @@
-@import 'rfs/scss';
-$rfs-two-dimensional: true;
+@use 'responsive';
 
 html[data-page-kind='home'] {
   // Always settle on a section; native snapping still permits scrolling inside tall sections.
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  overflow-x: clip;
   // Transformed snap areas must not rewrite Astro's saved scroll position.
   &[data-route-phase],
   &:has(dialog[open]) {
     scroll-snap-type: none;
     scroll-behavior: auto;
   }
-  overflow-x: clip;
   main.content {
     padding-bottom: 0;
   }
@@ -54,7 +53,9 @@ html[data-page-kind='home'] {
       color: #efeae3;
     }
   }
-  &[data-home-section='greatness'] {
+  // Before enhancement, read the first section's authored preference from markup.
+  &:not([data-home-section]):has(main .home-section[data-hide-navigation='true']:first-child),
+  &[data-home-navigation-hidden] {
     .site-header,
     .site-footer {
       opacity: 0;
@@ -106,7 +107,7 @@ html[data-page-kind='home'] {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: var(--home-image-position, center top);
   }
   .home-copy {
     display: flex;
@@ -125,21 +126,33 @@ html[data-page-kind='home'] {
   }
   h1,
   h2 {
-    @include font-size(73px);
-    margin: 0;
-    @include margin-left(40px);
-    @include margin-right(40px);
+    @include responsive.values(
+      (
+        font-size: 73px,
+        margin: 0,
+        margin-left: 40px,
+        margin-right: 40px,
+      )
+    );
   }
   p {
-    @include font-size(50px);
-    @include margin(40px);
-    margin-bottom: 0;
+    @include responsive.values(
+      (
+        font-size: 50px,
+        margin: 40px,
+        margin-bottom: 0,
+      )
+    );
   }
   .home-arrow {
     display: block;
-    @include font-size(118px);
     text-align: center;
     width: 85%;
+    @include responsive.values(
+      (
+        font-size: 118px,
+      )
+    );
   }
 }
 .home-tile-link {
@@ -159,18 +172,23 @@ html[data-page-kind='home'] {
   }
   h1 {
     color: #67994f;
-    @include margin-top(60px);
-    @include margin-left(120px);
-    @include margin-right(120px);
+    @include responsive.values(
+      (
+        margin-top: 60px,
+        margin-left: 120px,
+        margin-right: 120px,
+      )
+    );
   }
   p {
     color: #87613e;
-    @include margin-left(120px);
-    @include margin-right(120px);
-    margin-bottom: 0;
-  }
-  img {
-    object-position: center center;
+    @include responsive.values(
+      (
+        margin-left: 120px,
+        margin-right: 120px,
+        margin-bottom: 0,
+      )
+    );
   }
 }
 .home-logo {
@@ -178,29 +196,23 @@ html[data-page-kind='home'] {
   top: 0;
   left: 0;
   right: 0;
-  @include margin-top(60px);
   height: 8vh;
   min-height: 10vmin;
   background: url('/svg/SP_logo_web.svg') no-repeat center / contain;
   width: 277px;
   max-width: 70%;
   margin-inline: auto;
+  @include responsive.values(
+    (
+      margin-top: 60px,
+    )
+  );
 }
-.home-section[data-home-section='workshops'],
-.home-section[data-home-section='nachhaltigkeit'],
-.home-section[data-home-section='management'] {
-  img {
-    object-position: center center;
-  }
-}
-.home-section[data-home-section='business'] img {
-  object-position: right top;
-}
-.home-section[data-home-section='changemaker'] {
+.home-tile[data-arrow='inline'] {
   .home-arrow {
     display: none;
   }
-  p::after {
+  p:last-of-type::after {
     content: '';
     display: inline-block;
     height: 0.5em;
@@ -250,33 +262,42 @@ html[data-page-kind='home'] {
   }
 }
 @media (max-aspect-ratio: 1/1) {
+  html[data-page-kind='home'][data-home-mobile-menu-tone='light'] .site-header .menu {
+    color: #efeae3;
+  }
+  html[data-page-kind='home'][data-home-mobile-menu-tone='dark'] .site-header .menu {
+    color: #2b2c36;
+  }
   html[data-page-kind='home'][data-home-tone] .site-footer {
     color: #000;
   }
   .home-section,
   .home-section.image-right {
     flex-direction: column;
+    // Follow the visible viewport as mobile browser chrome expands/retracts.
+    // Keep a minimum, rather than a fixed height, so long/zoomed text can grow.
+    min-height: 100dvh;
+    img {
+      object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
+    }
     .home-panel {
       width: 100%;
     }
     .home-image {
-      min-height: 50svh;
+      min-height: 50dvh;
     }
     .home-copy {
-      min-height: 50svh;
+      min-height: 50dvh;
     }
   }
   .home-intro {
     .home-image {
       order: -1;
-      flex: 1 0 50svh;
+      flex: 1 0 50dvh;
     }
     .home-copy {
       flex: 1 0 auto;
       min-height: auto;
-    }
-    img {
-      object-position: center top;
     }
     .scroll-hint {
       display: none;

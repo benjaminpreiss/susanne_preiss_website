@@ -11,6 +11,15 @@ const error = (message: string) => ({ id: 'editorial-invalid', level: 'error' as
 const text = { type: String, required: true };
 const optionalText = { type: String };
 const identity = { key: text };
+const imagePositions = {
+  imagePosition: { type: String, default: 'center top' },
+  mobileImagePosition: optionalText,
+};
+const homeControls = {
+  tone: { type: String, matches: ['dark', 'light'], default: 'dark' },
+  mobileMenuTone: { type: String, matches: ['dark', 'light'] },
+  hideNavigation: { type: Boolean, default: false },
+};
 const media = {
   image: text,
   alt: text,
@@ -18,7 +27,10 @@ const media = {
 };
 const definitions = {
   article: { file: 'Article', attributes: {} },
-  'home-intro': { file: 'HomeIntro', attributes: { ...identity, image: text, alt: text } },
+  'home-intro': {
+    file: 'HomeIntro',
+    attributes: { ...identity, image: text, alt: text, ...imagePositions, ...homeControls },
+  },
   'home-tile': {
     file: 'HomeTile',
     attributes: {
@@ -26,7 +38,9 @@ const definitions = {
       ...media,
       destination: text,
       mobileImage: optionalText,
-      tone: { type: String, matches: ['dark', 'light'], default: 'dark' },
+      ...homeControls,
+      ...imagePositions,
+      arrow: { type: String, matches: ['below', 'inline'], default: 'below' },
     },
   },
   prose: { file: 'Prose', attributes: identity },

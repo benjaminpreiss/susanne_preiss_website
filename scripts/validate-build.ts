@@ -2,6 +2,8 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { load } from 'cheerio';
 import { pageOutput, normalizePath } from '../src/lib/content/paths';
+import config from '../astro.config.mjs';
+import { validateDiscovery } from './validate-discovery';
 
 const root = resolve('dist');
 async function files(dir: string): Promise<string[]> {
@@ -97,6 +99,24 @@ for (const { file, $ } of documents) {
       throw new Error(`Missing fragment: ${href}`);
   }
 }
+validateDiscovery(
+  published.map(({ $ }) => ({
+    canonical: $('link[rel="canonical"]').attr('href')!,
+    locale: $('html').attr('lang')!,
+    alternates: $('link[hreflang]')
+      .toArray()
+      .map((element) => ({
+        locale: $(element).attr('hreflang')!,
+        href: $(element).attr('href')!,
+      })),
+    noindex: $('meta[name="robots"]')
+      .toArray()
+      .some((element) => /\b(noindex|none)\b/i.test($(element).attr('content') ?? '')),
+  })),
+  await readFile(join(root, 'sitemap.xml'), 'utf8'),
+  await readFile(join(root, 'robots.txt'), 'utf8'),
+  new URL(config.site!).origin,
+);
 console.log(
-  `Validated ${canonicals.size} published routes, HTML links, alternates and first-party assets.`,
+  `Validated ${canonicals.size} published routes, HTML links, alternates, sitemap, robots and first-party assets.`,
 );

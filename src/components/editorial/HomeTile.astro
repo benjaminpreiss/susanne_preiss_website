@@ -11,6 +11,11 @@ const {
   alt,
   side = 'left',
   tone = 'dark',
+  mobileMenuTone = tone,
+  hideNavigation = false,
+  imagePosition = 'center top',
+  mobileImagePosition = imagePosition,
+  arrow = 'below',
   destination,
   imageOrder,
 } = Astro.props;
@@ -26,6 +31,13 @@ const href = await editorialDestination(
   class={`home-section home-tile image-${side}`}
   data-home-section={key}
   data-control-tone={tone}
+  data-mobile-menu-tone={mobileMenuTone}
+  data-hide-navigation={String(hideNavigation)}
+  data-arrow={arrow}
+  style={{
+    '--home-image-position': imagePosition,
+    '--home-mobile-image-position': mobileImagePosition,
+  }}
 >
   <div class={`home-panel home-image home-${side}`}>
     <ResponsiveImage

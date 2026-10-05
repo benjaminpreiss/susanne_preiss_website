@@ -1,0 +1,48 @@
+@use 'sass:math';
+@use 'sass:meta';
+
+// Adapted from RFS 9.0.6 (MIT); see docs/licenses/rfs.txt.
+// Only the site's configuration is retained: non-negative px sizes (or zero),
+// rem output, 20px base, factor 10, and a two-dimensional 1200px breakpoint.
+$base: 20px;
+$factor: 10;
+$breakpoint: 1200px;
+
+@function -fixed($value) {
+  @if meta.type-of($value) != 'number' {
+    @error 'Responsive sizes must be non-negative px values or zero.';
+  }
+  @if $value == 0 {
+    @return 0;
+  }
+  @if math.unit($value) != 'px' or $value < 0 {
+    @error 'Responsive sizes must be non-negative px values or zero.';
+  }
+  @return math.div($value, 16px) * 1rem;
+}
+
+@function -fluid($value) {
+  $fixed: -fixed($value);
+  @if $value <= $base {
+    @return $fixed;
+  }
+  $minimum: $base + math.div($value - $base, $factor);
+  $viewport: math.div(($value - $minimum) * 100, $breakpoint) * 1vmin;
+  @return calc(#{-fixed($minimum)} + #{$viewport});
+}
+
+// Emit every base declaration before any breakpoint overrides, preserving
+// legacy Sass hoisting without deprecated mixed declarations. Include static
+// shorthand/longhand overrides in this ordered map too (e.g. margin-bottom: 0).
+@mixin values($properties) {
+  @each $property, $value in $properties {
+    #{$property}: -fluid($value);
+  }
+  @media (min-width: $breakpoint) and (min-height: $breakpoint) {
+    @each $property, $value in $properties {
+      @if -fixed($value) != -fluid($value) {
+        #{$property}: -fixed($value);
+      }
+    }
+  }
+}

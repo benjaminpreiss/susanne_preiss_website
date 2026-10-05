@@ -82,9 +82,15 @@ export function mountHomepage(document: Document) {
     const section = visibleSection();
     const key = section.dataset.homeSection!;
     const light = section.dataset.controlTone === 'light';
+    const mobileMenuTone = section.dataset.mobileMenuTone ?? section.dataset.controlTone ?? 'dark';
     // No numerical slide indices: identity and authored tone survive editorial reordering.
     document.documentElement.dataset.homeSection = key;
     document.documentElement.dataset.homeTone = light ? 'light' : 'dark';
+    document.documentElement.dataset.homeMobileMenuTone = mobileMenuTone;
+    document.documentElement.toggleAttribute(
+      'data-home-navigation-hidden',
+      section.dataset.hideNavigation === 'true',
+    );
     controls!.dataset.tone = light && !portrait.matches ? 'light' : 'dark';
     links.forEach((link, index) => {
       if (sections[index] === section) link.setAttribute('aria-current', 'location');
@@ -93,7 +99,11 @@ export function mountHomepage(document: Document) {
     const signature = `${key}:${portrait.matches}`;
     if (current !== signature) {
       current = signature;
-      controller.setSection({ key, lightHeader: light, lightFooter: light && !portrait.matches });
+      controller.setSection({
+        key,
+        lightHeader: portrait.matches ? mobileMenuTone === 'light' : light,
+        lightFooter: light && !portrait.matches,
+      });
     }
   }
   function schedule() {
@@ -223,6 +233,8 @@ export function mountHomepage(document: Document) {
     controls.replaceChildren();
     delete document.documentElement.dataset.homeSection;
     delete document.documentElement.dataset.homeTone;
+    delete document.documentElement.dataset.homeMobileMenuTone;
+    document.documentElement.removeAttribute('data-home-navigation-hidden');
     controller.setSection(null);
   };
 }

@@ -151,6 +151,7 @@ try {
           const section = page.locator(legacy ? `.m-video-container:has(#${id})` : `#${id}`);
           const video = section.locator(legacy ? 'video' : 'hlsjs-video');
           await section.scrollIntoViewIfNeeded();
+          if (!legacy) await video.waitFor({ state: 'attached' });
           await section
             .locator('.video-initial-poster, .video-cover-image')
             .evaluateAll(async (nodes) => {
@@ -405,6 +406,8 @@ try {
             await page.locator('#page-return').click();
             await page.waitForURL(`**/${slug}/`);
             await settled(page);
+            await section.scrollIntoViewIfNeeded();
+            await video.waitFor({ state: 'attached' });
             assert.equal(await section.locator('video').count(), 1);
             assert.equal(await section.locator('video-player').count(), 1);
             await oldVideo.dispose();

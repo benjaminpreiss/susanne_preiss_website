@@ -5,6 +5,9 @@ import { publishedContent } from '../lib/content/published';
 import { ui } from '../lib/content/ui';
 import { navigationModel } from '../lib/content/navigation';
 import Navigation from '../components/Navigation.svelte';
+import SocialMetadata from '../components/SocialMetadata.astro';
+import headingFont from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-300-italic.woff2?url&no-inline';
+import '../styles/fonts.scss';
 import '../styles/site.scss';
 import '../styles/homepage.scss';
 interface Props {
@@ -22,7 +25,6 @@ const navigation = navigationModel(routes, data.translationKey, data.locale, str
 <html
   lang={data.locale}
   transition:animate="none"
-  data-home-section={data.translationKey === 'home' ? 'greatness' : undefined}
   data-home-tone={data.translationKey === 'home' ? 'dark' : undefined}
   data-page-kind={
     data.translationKey === 'home' ? 'home' : navigation.isUtility ? 'utility' : 'content'
@@ -66,18 +68,13 @@ const navigation = navigationModel(routes, data.translationKey, data.locale, str
     <title>{data.title}</title>
     <meta name="description" content={data.description} />
     <link rel="canonical" href={routes.canonical(data.translationKey, data.locale)} />
+    <SocialMetadata data={data} canonical={routes.canonical(data.translationKey, data.locale)} />
     {routes.alternates(data.translationKey).map((alternate) => (
       <link rel="alternate" hreflang={alternate.locale} href={alternate.href} />
     ))}
-    <link
-      href="https://fonts.googleapis.com/css?family=Cormorant+Garamond:300i&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet" />
+    {!navigation.isUtility && (
+      <link rel="preload" as="font" type="font/woff2" href={headingFont} crossorigin="anonymous" />
+    )}
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png" />
     <link rel="manifest" href="/manifest.json" />

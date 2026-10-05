@@ -73,6 +73,28 @@ nicht `<br>`. Für eine ausgeschriebene nummerierte Absatzzeile statt einer List
 `1\. Text`. Listen verwenden `- Text` bzw. `1. Text`. Anführungszeichen und Satzzeichen
 werden nicht automatisch typografisch verändert.
 
+### Strukturierte Daten für Leistungen und Kurse
+
+Passende Seiten unter `pages/` können zusätzlich im Kopfbereich ein ausdrücklich
+geprüftes Angebot beschreiben:
+
+```yaml
+structuredData:
+  type: Service
+  name: 'Business Coaching'
+  description: 'Eine sachliche Zusammenfassung des auf dieser Seite beschriebenen Angebots.'
+```
+
+Erlaubt sind `Service` für Leistungen und `Course` für ein beschriebenes Lernprogramm.
+`name` und `description` müssen durch den sichtbaren Seiteninhalt belegt und in der
+Sprache der Seite verfasst sein. Der Anbieter ist hier ausschließlich Susanne Preiss;
+fremde Angebote dürfen so nicht ausgezeichnet werden. Für Startseite und About wird
+stattdessen automatisch `WebSite` beziehungsweise `Person` ausgegeben.
+Keine Bewertungen, Preise, Termine, Verfügbarkeit oder Abschlüsse ergänzen, die nicht
+belegt sind. Ein Kurs ohne Termine ist kein angekündigtes `Event`. Das Feld ist
+optional und erscheint nicht als neuer sichtbarer Text. Strukturierte Daten garantieren
+keine besondere Darstellung in Suchergebnissen.
+
 ## Abschnitte im Seitenkörper anordnen
 
 Markdoc verbindet Text mit wenigen benannten Bausteinen. Zum Umordnen verschieben
@@ -99,10 +121,32 @@ Hier steht der Text.
 ### Verfügbare Bausteine
 
 - `home-intro`: Einleitung der Startseite; `key`, `image`, `alt`. Im Block stehen
-  Hauptüberschrift und Begleittext. Die bestehenden Fragmentziele bleiben erhalten.
+  Hauptüberschrift und Begleittext. `tone`, `mobileMenuTone`, `hideNavigation`,
+  `imagePosition` und `mobileImagePosition` funktionieren wie bei `home-tile`
+  (siehe unten). Das gemeinsame Intro-Layout (Bild zuerst im Hochformat,
+  halbe Bildschirmhöhe) und die bestehenden Fragmentziele bleiben erhalten.
 - `home-tile`: verlinkter Startseitenabschnitt; `key`, `image`, `alt`,
   `destination="content:translationKey"`, optional `mobileImage`, `side="left"`
-  oder `"right"` und `tone="dark"` oder `"light"` für die Bedienelemente.
+  oder `"right"` und `tone="dark"` oder `"light"` für die Bedienelemente
+  (Standard: `dark`; bezeichnet die Farbe der Bedienelemente, nicht des Hintergrunds).
+  `mobileMenuTone="dark"` oder `"light"` überschreibt nur die Farbe des Menüknopfs
+  im Hochformat (`max-aspect-ratio: 1/1`); ohne Angabe gilt `tone`. Desktop und
+  Fußzeile bleiben davon unberührt.
+  `hideNavigation=true` blendet Kopfzeile/Menü und Fußzeile auf diesem Abschnitt
+  aus (Standard: `false`, auch bei `home-intro`). Tastaturfokus macht die Elemente
+  weiterhin erreichbar und sichtbar. Die Abschnittspunkte und die eigentlichen
+  Inhaltslinks bleiben unverändert. Die bestehende Einleitung setzt diese Option
+  ausdrücklich; weder Abschnittsname noch Bausteintyp bestimmen die Sichtbarkeit.
+  `imagePosition="center top"` (Standard) akzeptiert eigenständige CSS-Positionen,
+  z. B. `"center bottom"`, `"30% 70%"`, `"right 12px top 20%"` oder
+  `"calc(50% - 10px) 25%"`. `mobileImagePosition` überschreibt den Ausschnitt nur
+  im Hochformat; ohne Angabe gilt `imagePosition`. Beide Attribute funktionieren
+  auch bei `home-intro`. Die CSS-Syntax wird beim Build geprüft; zusätzliche
+  Deklarationen, URLs und externe CSS-Variablen (`var(...)`) sind nicht erlaubt.
+  `arrow="below"` (Standard) zeigt den Pfeil unter dem Text;
+  `arrow="inline"` setzt ihn ans Ende des letzten Begleitabsatzes.
+  Diese Optionen gelten unabhängig von `key`, Reihenfolge und Zielseite. Neue
+  oder umbenannte Abschnitte benötigen keine eigenen CSS-Regeln.
   Der Inhalt enthält eine `##`-Überschrift und optional Begleittext, keine weiteren Links.
   Abschnittsreihenfolge und Beschriftungen der Abschnittssteuerung folgen diesen Blöcken.
 - `article`: zusammenhängender Text wie About; ohne Attribute.
@@ -259,6 +303,7 @@ pnpm test     # Automatisierte Prüfungen einschließlich isolierter Inhaltsänd
 Unbekannte Tags/Attribute, fehlende Pflichtangaben, ungültige Verschachtelung, doppelte
 Block-Kennungen und fehlende Verweise stoppen den Build. Die alte `sections`-Angabe
 ist nicht mehr zulässig. Prüfen Sie Änderungen auch auf großem und kleinem Bildschirm.
-Einige Migrationstests vergleichen den Text absichtlich mit der alten Website: Bei
-gewollten Textänderungen müssen Erwartungen gezielt überprüft werden, nicht einfach
-Tests entfernt werden. Diese Befehle veröffentlichen nichts.
+Gültige Änderungen an Texten, Beschreibungen oder der Abschnittsreihenfolge erfordern
+keine Anpassung von Testerwartungen. Komponententests verwenden eigene Beispielinhalte;
+die echte Website wird auf gültige Struktur, Metadaten, Verweise und Dateien geprüft.
+Diese Befehle veröffentlichen nichts.

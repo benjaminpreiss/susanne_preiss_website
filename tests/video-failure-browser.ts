@@ -53,6 +53,8 @@ try {
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(`${site}/workshops/`, { waitUntil: 'domcontentloaded' });
     const section = page.locator('#video1');
+    await section.scrollIntoViewIfNeeded();
+    await section.locator('hlsjs-video').waitFor({ state: 'attached' });
     await section.locator('.video-play').waitFor();
     await page.waitForFunction(() => !!document.querySelector('.video-status')?.textContent);
     assert.equal(await section.locator('.media-player[data-started]').count(), 0);

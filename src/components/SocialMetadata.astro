@@ -1,0 +1,71 @@
+---
+import { getImage } from 'astro:assets';
+import portrait from '../assets/images/about_start_2.jpg';
+import type { PageData, SharedData } from '../lib/content/schema';
+interface Props {
+  data: PageData | SharedData;
+  canonical: string;
+}
+const { data, canonical } = Astro.props;
+// An existing portrait, not an invented campaign image. Do not crop the subject.
+const image = await getImage({ src: portrait, width: 1200, format: 'jpg', quality: 80 });
+const imageUrl = new URL(image.src, canonical).href;
+const imageAlt = 'Susanne Preiss';
+const structuredData =
+  data.translationKey === 'home'
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        '@id': `${canonical}#website`,
+        name: 'Susanne Preiss',
+        url: canonical,
+        inLanguage: data.locale,
+      }
+    : data.translationKey === 'about'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          '@id': new URL('/#person', canonical).href,
+          name: 'Susanne Preiss',
+          url: canonical,
+          image: imageUrl,
+        }
+      : 'structuredData' in data && data.structuredData
+        ? {
+            '@context': 'https://schema.org',
+            '@type': data.structuredData.type,
+            '@id': `${canonical}#${data.structuredData.type.toLowerCase()}`,
+            name: data.structuredData.name,
+            description: data.structuredData.description,
+            url: canonical,
+            provider: {
+              '@type': 'Person',
+              '@id': new URL('/#person', canonical).href,
+              name: 'Susanne Preiss',
+            },
+          }
+        : undefined;
+---
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Susanne Preiss" />
+<meta property="og:title" content={data.title} />
+<meta property="og:description" content={data.description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:type" content="image/jpeg" />
+<meta property="og:image:width" content={image.attributes.width} />
+<meta property="og:image:height" content={image.attributes.height} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={data.title} />
+<meta name="twitter:description" content={data.description} />
+<meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={imageAlt} />
+{structuredData && (
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(structuredData).replaceAll('<', '\\u003c')}
+  />
+)}

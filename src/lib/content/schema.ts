@@ -29,6 +29,14 @@ export const routeSchema = z.strictObject({
   description: requiredText,
 });
 export const pageSchema = routeSchema.extend({
+  // Opt in only when the localized visible page substantiates this entity.
+  structuredData: z
+    .strictObject({
+      type: z.enum(['Service', 'Course']),
+      name: requiredText,
+      description: requiredText,
+    })
+    .optional(),
   hero: requiredText.regex(/^\/img\/[a-zA-Z0-9_-]+\.(?:jpg|jpeg|png|webp|svg)$/),
   // Empty alt deliberately preserves decorative legacy background imagery.
   heroAlt: z.string(),

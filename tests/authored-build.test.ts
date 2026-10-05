@@ -5,6 +5,7 @@ import { resolve, join } from 'node:path';
 import { buildFixture, seedImageCache } from './fixture-build';
 import { load } from 'cheerio';
 import { english } from './fixtures/ui';
+import { seedEditorialContent } from './fixtures/editorial-content';
 
 test(
   'authored routes build owner examples, path edits, aliases and collision failures',
@@ -25,6 +26,7 @@ test(
     try {
       for (const name of [
         'src',
+        'scripts',
         'content',
         'public',
         'astro.config.mjs',
@@ -35,6 +37,7 @@ test(
       ])
         await cp(resolve(name), join(fixture, name), { recursive: true });
       await seedImageCache(fixture);
+      await seedEditorialContent(fixture);
       const dictionary = join(fixture, 'content/ui.json');
       await writeFile(
         dictionary,
