@@ -275,7 +275,10 @@ html[data-page-kind='home'] {
     flex-direction: column;
     // Stable targets do not follow toolbar expansion/retraction; rotation still updates them.
     // A minimum lets long/zoomed copy grow in the document's native scroll flow.
-    min-height: 100lvh;
+    min-height: 100svh;
+    // The beige page background fills this gap outside the section's snap area.
+    // Keep it after the last slide too, so that slide can reach the viewport top.
+    margin-bottom: calc(100lvh - 100svh);
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
     }
@@ -288,12 +291,9 @@ html[data-page-kind='home'] {
     }
     .home-copy {
       flex: 1 0 auto;
-      // Border-box includes the existing padding in this target, not on top of it.
-      min-height: calc(100lvh - 50svh);
+      min-height: 50svh;
+      padding: 0;
     }
-  }
-  .home-tile .home-copy {
-    padding: 0 0 10lvh;
   }
   .home-intro {
     .home-image {

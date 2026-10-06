@@ -59,16 +59,17 @@ test('portrait homepage tiles share stable viewport targets and allow text to gr
   const css = compact(compile('src/styles/homepage.scss').css);
   assert.match(
     css,
-    /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100lvh;/,
+    /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100svh;/,
   );
   assert.match(css, /\.home-image\{flex:00auto;height:50svh;/);
-  assert.match(css, /\.home-copy\{flex:10auto;min-height:calc\(100lvh-50svh\);/);
+  assert.match(css, /\.home-copy\{flex:10auto;min-height:50svh;padding:0;/);
   assert.match(css, /\.home-intro\.home-image\{order:-1;\}/);
   assert.match(css, /\.home-intro\.home-copy\{overflow:visible;\}/);
   assert.match(css, /\.home-panel\{width:50%;min-width:0;box-sizing:border-box;/);
   assert.match(css, /scroll-snap-type:ymandatory;/);
   assert.match(css, /scroll-snap-align:start;/);
-  assert.match(css, /\.home-tile\.home-copy\{padding:0010lvh;/);
+  assert.match(css, /min-height:100svh;margin-bottom:calc\(100lvh-100svh\);/);
+  assert.doesNotMatch(css, /body::after/);
   assert.doesNotMatch(css, /\d+dvh/);
 });
 
