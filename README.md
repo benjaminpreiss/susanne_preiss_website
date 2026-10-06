@@ -106,9 +106,9 @@ resizes to `50svh + 100dvh - 100svh` over 300ms, synchronized with text translat
 The image fills that changing frame with `object-fit: cover`, so its sizing/crop
 really updates rather than revealing a clipped, fixed-size image. Layout containment
 keeps the frame's resizing out of surrounding flow; the slot and margins do not animate.
-Section layout height and the fixed `100lvh - 100svh` beige gap do not change with
-browser chrome. A bottom scroll margin
-includes translated text in the snap area without enlarging the layout box. See
+Portrait sections stay `100svh`, text panels stay `50svh`, and the beige gap stays
+`100lvh - 100svh`. Copy must fit these fixed boxes; oversized-content expansion is
+not supported. There is no toolbar-dependent scroll margin to change snap geometry. See
 [the shared GSAP decision](docs/adr/0004-shared-gsap-motion.md).
 Native scrolling replaces fullpage.js. The menu uses a native modal dialog with
 keyboard/focus management; contact/legal destinations are ordinary pages, not overlays.

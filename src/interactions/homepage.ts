@@ -191,13 +191,6 @@ export function mountHomepage(document: Document) {
         return;
       }
       const section = visibleSection();
-      const rect = section.getBoundingClientRect();
-      // Leave scrolling inside oversized sections native so zoomed/long content stays reachable.
-      if (
-        rect.height > view.innerHeight + 1 &&
-        (direction > 0 ? rect.bottom > view.innerHeight + 1 : rect.top < -1)
-      )
-        return;
       const next = sections.indexOf(section) + direction;
       if (!sections[next]) return;
       event.preventDefault();

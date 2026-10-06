@@ -484,28 +484,22 @@ try {
           await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
           true,
         );
-        // A taller-than-viewport section must remain scrollable, not trap its lower content.
-        await page.locator('#section-workshops .home-copy').evaluate((node) => {
-          const text = document.createElement('p');
-          text.textContent = 'Long-section reachability fixture. '.repeat(150);
-          node.append(text);
-        });
-        await page.waitForTimeout(900); // Let native re-snapping after the fixture's layout change finish.
+        // Portrait sections have fixed snap boxes; keyboard navigation moves between tops.
+        await page.setViewportSize({ width: 390, height: 664 });
         await page.locator('main').focus();
         await section(page, 'workshops');
-        const tall = await page.locator('#section-workshops').boundingBox();
-        assert.ok(tall && tall.height > 480);
-        const longStart = await page.evaluate(() => scrollY);
+        const fixed = await page.locator('#section-workshops').evaluate((node) => ({
+          height: node.getBoundingClientRect().height,
+          copy: node.querySelector('.home-copy')!.getBoundingClientRect().height,
+          snapMargin: getComputedStyle(node).scrollMarginBottom,
+        }));
+        assert.ok(Math.abs(fixed.height - 664) < 1);
+        assert.ok(Math.abs(fixed.copy - 332) < 1);
+        assert.equal(fixed.snapMargin, '0px');
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(600);
-        const longScroll = await page.evaluate(() => scrollY);
-        assert.ok(
-          longScroll > longStart && longScroll < longStart + tall.height - 480,
-          'Arrow key scrolls within a tall section before leaving it',
+        await page.waitForFunction(
+          () => document.documentElement.dataset.homeSection === 'personal',
         );
-        await page
-          .locator('#section-workshops .home-copy > p')
-          .evaluate((node) => node.scrollIntoView({ block: 'end', behavior: 'instant' }));
         await page.keyboard.press('End');
         await page.waitForTimeout(600);
         assert.equal(

@@ -1,7 +1,7 @@
 @use 'responsive';
 
 html[data-page-kind='home'] {
-  // Always settle on a section; native snapping still permits scrolling inside tall sections.
+  // Settle on section tops; portrait slide content is authored to fit its fixed boxes.
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overflow-x: clip;
@@ -284,13 +284,10 @@ html[data-page-kind='home'] {
   .home-section,
   .home-section.image-right {
     flex-direction: column;
-    // Toolbar changes must not resize the snap box; long/zoomed copy can still grow it.
-    min-height: 100svh;
+    // Fixed snap boxes: toolbar changes and content must not resize the section.
+    height: 100svh;
     // Fixed, non-snapping beige space also reserves room for the text's visual offset.
     margin-bottom: calc(100lvh - 100svh);
-    // Include translated content in the snap area, not the layout box. For tall copy,
-    // snap-area height minus viewport height stays constant as browser chrome changes.
-    scroll-margin-bottom: calc(100dvh - 100svh);
     box-sizing: border-box;
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
@@ -320,8 +317,9 @@ html[data-page-kind='home'] {
       }
     }
     .home-copy {
-      flex: 1 0 auto;
-      min-height: 50svh;
+      flex: 0 0 auto;
+      height: 50svh;
+      min-height: 0;
       padding: 0;
       // Follow the enlarged image visually, using the already-reserved beige gap.
       // Match the image frame's height transition so their visible edges stay joined.

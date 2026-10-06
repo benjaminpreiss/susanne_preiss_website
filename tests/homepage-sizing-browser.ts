@@ -299,8 +299,7 @@ try {
         for (const transition of transitions) transition.finish();
         return { timings, properties, samples, scroll: scrollY };
       });
-      // Viewport resizing can itself trigger native re-snapping (also with a fixed image).
-      // Check that interpolating the absolute frame adds no further document movement.
+      // Neither toolbar resizing nor the image animation may change the current snap position.
       results.push({
         viewportScroll: {
           anchoredScroll,
@@ -312,8 +311,8 @@ try {
       });
       near(
         animation.scroll,
-        afterResize,
-        'frame interpolation does not move the document after native viewport adjustment',
+        anchoredScroll,
+        'toolbar resizing and frame interpolation keep the current snap position',
       );
       assert.equal(
         animation.timings.length,
@@ -353,59 +352,28 @@ try {
       results.push({ animatedViewportHeight: height, animation });
     }
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    // Keep the synthetic toolbar range for tall text too: translated overflow must be reachable.
-    await page.setViewportSize({ width: 390, height: large });
-    // Extra copy and enlarged text must grow each section, not the image or a scroll panel.
+    // Oversized copy is unsupported: it must not silently enlarge the snap boxes.
     await page.locator('.home-copy p').evaluateAll((paragraphs) => {
       for (const paragraph of paragraphs) paragraph.textContent = 'Additional text. '.repeat(80);
-      document.documentElement.style.fontSize = '32px';
     });
-    for (const height of [small, large]) {
-      await page.setViewportSize({ width: 390, height });
-      for (const section of await page.locator('.home-section').all()) {
-        const box = await section.evaluate((node) => {
-          const rect = node.getBoundingClientRect();
-          const image = node.querySelector('.home-image')!.getBoundingClientRect();
-          const copy = node.querySelector('.home-copy')!;
-          const content = copy.firstElementChild!.getBoundingClientRect();
-          const copyRect = copy.getBoundingClientRect();
-          return {
-            height: rect.height,
-            imageHeight: image.height,
-            copyHeight: copyRect.height,
-            contentTop: content.top - copyRect.top,
-            contentBottom: copyRect.bottom - content.bottom,
-            overflow: getComputedStyle(copy).overflowY,
-          };
-        });
-        near(box.imageHeight, small / 2, 'long copy does not enlarge/shrink image slot');
-        near(box.height, small / 2 + box.copyHeight, 'tall section uses stable layout footprint');
-        assert.ok(box.height > 844, 'section grows');
-        assert.ok(box.contentTop >= -1 && box.contentBottom >= -1, 'copy is contained');
-        assert.equal(box.overflow, 'visible', 'no clipping or nested scrolling');
-        await section.evaluate((node) => {
-          const content = node.querySelector('.home-copy')!.firstElementChild!;
-          content.scrollIntoView({ block: 'end', behavior: 'instant' });
-        });
-        await page.waitForFunction(
-          (id) => {
-            const bottom = document
-              .getElementById(id)!
-              .querySelector('.home-copy')!
-              .firstElementChild!.getBoundingClientRect().bottom;
-            return bottom > 0 && bottom <= innerHeight + 1;
-          },
-          await section.evaluate((node) => node.id),
-        );
-        results.push({ viewportHeight: height, tall: box });
-      }
+    const fixedBoxes = await page.locator('.home-section').evaluateAll((sections) =>
+      sections.map((section) => ({
+        section: section.getBoundingClientRect().height,
+        copy: section.querySelector('.home-copy')!.getBoundingClientRect().height,
+        snapMargin: getComputedStyle(section).scrollMarginBottom,
+      })),
+    );
+    for (const box of fixedBoxes) {
+      near(box.section, small, 'content cannot enlarge a portrait section');
+      near(box.copy, small / 2, 'copy box stays fixed');
+      assert.equal(box.snapMargin, '0px');
     }
+    results.push({ fixedBoxes });
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
       true,
-      'enlarged text has no horizontal overflow',
+      'portrait layout has no horizontal overflow',
     );
-    await page.screenshot({ path: join(output, 'enlarged-text.png') });
   } finally {
     await context.close();
   }
