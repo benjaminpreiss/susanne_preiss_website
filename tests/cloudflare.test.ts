@@ -25,7 +25,11 @@ test('native Worker Previews use static assets without account identifiers, DNS 
     },
     previews: {},
   });
-  assert.deepEqual((await readdir('.github/workflows')).sort(), ['validate.yml']);
+  // Dependency auto-merge is not a deployment workflow; keep unexpected workflows gated.
+  assert.deepEqual((await readdir('.github/workflows')).sort(), [
+    'dependabot-automerge.yml',
+    'validate.yml',
+  ]);
 });
 
 test('Cloudflare rebuilds and checks its own output before the native preview command', async () => {
