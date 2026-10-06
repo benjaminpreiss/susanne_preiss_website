@@ -1,0 +1,107 @@
+name: Queue eligible Dependabot auto-merge
+
+on:
+  pull_request_target:
+    branches: [master]
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions: {}
+
+jobs:
+  automerge:
+    # Owner sets this variable only after proving master required-check enforcement.
+    if: >-
+      vars.DEPENDABOT_AUTOMERGE_ENABLED == 'true' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    concurrency:
+      group: dependabot-automerge-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # Re-authorize every revision; a previously queued PR must not retain permission
+      # if metadata verification fails or a later commit is no longer eligible.
+      - name: Revoke any previous auto-merge request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          PR_ID=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq 'if .auto_merge != null then .node_id else empty end')
+          if [ -n "$PR_ID" ]; then
+            gh api graphql -f query='mutation($id: ID!) { disablePullRequestAutoMerge(input: {pullRequestId: $id}) { pullRequest { number } } }' -f id="$PR_ID"
+          fi
+      # No checkout, install, artifacts, caches or execution of PR-controlled code.
+      - name: Read signed Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ github.token }}
+      - name: Check every update and queue native auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPDATES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node <<'POLICY'
+          const { execFileSync } = require('node:child_process');
+          const { UPDATES, REPOSITORY, PR_NUMBER, HEAD_SHA } = process.env;
+          const gh = (...args) => JSON.parse(execFileSync('gh', args, { encoding: 'utf8' }));
+          const skip = (reason) => { console.log(`Manual review: ${reason}`); };
+          function eligible(update) {
+            const allowed = ['prettier', 'ignore', '@types/css-tree'];
+            const stable = /^[1-9]\d*\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+            if (!update || !allowed.includes(update.dependencyName) ||
+                update.dependencyType !== 'direct:development' ||
+                update.packageEcosystem !== 'npm_and_yarn' ||
+                update.directory !== '/' || update.targetBranch !== 'master' ||
+                update.dependencyGroup !== 'stable-tooling' ||
+                update.maintainerChanges !== false ||
+                !['version-update:semver-minor', 'version-update:semver-patch'].includes(update.updateType) ||
+                !stable.test(update.prevVersion) || !stable.test(update.newVersion)) return false;
+            const before = update.prevVersion.split('.').map(Number);
+            const after = update.newVersion.split('.').map(Number);
+            return after[0] === before[0] && (after[1] > before[1] ||
+              (after[1] === before[1] && after[2] > before[2]));
+          }
+          function main() {
+            const updates = JSON.parse(UPDATES || '[]');
+            if (!Array.isArray(updates) || updates.length === 0 || !updates.every(eligible)) {
+              return skip('not a fully eligible stable-tooling version update');
+            }
+            if (!/^[\w.-]+\/[\w.-]+$/.test(REPOSITORY) || !/^\d+$/.test(PR_NUMBER) ||
+                !/^[a-f0-9]{40}$/.test(HEAD_SHA)) throw new Error('Invalid event identity');
+            const path = `repos/${REPOSITORY}/pulls/${PR_NUMBER}`;
+            const pr = gh('api', path);
+            if (pr.state !== 'open' || pr.draft || pr.user.login !== 'dependabot[bot]' ||
+                pr.base.ref !== 'master' || pr.base.repo.full_name !== REPOSITORY ||
+                pr.head.repo.full_name !== REPOSITORY || pr.head.sha !== HEAD_SHA ||
+                pr.commits !== 1) return skip('PR identity changed or contains additional commits');
+            // fetch-metadata verifies the first commit; also require it to be the only/head commit.
+            const commits = gh('api', `${path}/commits`);
+            if (commits.length !== 1 || commits[0].sha !== HEAD_SHA ||
+                commits[0].author?.login !== 'dependabot[bot]' ||
+                commits[0].commit.verification?.verified !== true) return skip('unverified head commit');
+            const files = gh('api', `${path}/files?per_page=100`);
+            if (files.length !== pr.changed_files || files.length === 0 ||
+                !files.some((file) => file.filename === 'package.json') ||
+                !files.every((file) => file.status === 'modified' &&
+                  ['package.json', 'pnpm-lock.yaml'].includes(file.filename))) {
+              return skip('unexpected files or lockfile-only update');
+            }
+            const branch = gh('api', `repos/${REPOSITORY}/branches/master`);
+            if (branch.protected !== true) throw new Error('master is not protected');
+            // No mergePullRequest / gh pr merge fast path: only request GitHub's gated auto-merge.
+            gh('api', 'graphql', '-f', 'query=mutation($id: ID!, $sha: GitObjectID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, expectedHeadOid: $sha, mergeMethod: SQUASH}) { pullRequest { number } } }',
+              '-f', `id=${pr.node_id}`, '-f', `sha=${HEAD_SHA}`);
+            console.log('Requested native auto-merge; required checks/reviews still apply.');
+          }
+          main();
+          POLICY
