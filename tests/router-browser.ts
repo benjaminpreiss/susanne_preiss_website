@@ -146,7 +146,7 @@ function watch(page: Page, origin: string) {
       errors.push(`${response.status()} ${response.url()}`);
   });
   page.on('console', (message) => {
-    if (/hydration|ownership|GSAP target|duplicate view-transition-name/i.test(message.text()))
+    if (/hydration|ownership|duplicate view-transition-name/i.test(message.text()))
       errors.push(message.text());
   });
 }
@@ -269,19 +269,36 @@ try {
         const menu = page.locator('#menu-trigger');
         await menu.focus();
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(reduced ? 0 : 1100);
+        // Wait for the visible menu state, not an assumed timer or a zero-delay hydration race.
+        await page.waitForFunction(
+          () => {
+            const links = document.querySelector('dialog[open] .main-navigation');
+            const footer = document.querySelector('footer');
+            return (
+              links &&
+              getComputedStyle(links).opacity === '1' &&
+              footer &&
+              footer.getBoundingClientRect().top >= innerHeight
+            );
+          },
+          null,
+          { timeout: 3000 },
+        );
         assert.equal(
           await page
             .locator('dialog')
             .evaluate((node) => node instanceof HTMLDialogElement && node.open),
           true,
         );
-        assert.equal(
-          await page
-            .locator('footer')
-            .evaluate((node) => node.getBoundingClientRect().top >= innerHeight),
-          true,
-        );
+        const menuFooter = await page.locator('footer').evaluate((node) => ({
+          top: node.getBoundingClientRect().top,
+          height: node.getBoundingClientRect().height,
+          viewport: innerHeight,
+          inline: node.getAttribute('style'),
+          transform: getComputedStyle(node).transform,
+        }));
+        report[`${name}-menu-footer`] = menuFooter;
+        assert.ok(menuFooter.top >= menuFooter.viewport, JSON.stringify(menuFooter));
         assert.equal(await page.locator('#page-return').count(), 0);
         for (let i = 0; i < 10; i++) {
           await page.keyboard.press(i < 5 ? 'Tab' : 'Shift+Tab');

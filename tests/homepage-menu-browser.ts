@@ -27,7 +27,7 @@ try {
     await page.goto(site, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
     await page.waitForFunction(() => document.documentElement.dataset.homeSection !== undefined);
-    // Ordinary tile and intro, twice each to catch stale GSAP transform caches on reopen.
+    // Ordinary tile and intro, twice each to catch offset drift on reopen.
     for (const index of [1, 0]) {
       const section = page.locator('.home-section').nth(index);
       await section.evaluate((node) =>

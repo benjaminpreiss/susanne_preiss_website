@@ -104,6 +104,7 @@ try {
         reducedMotion: reduced ? 'reduce' : 'no-preference',
       });
       try {
+        context.setDefaultTimeout(30_000);
         await replayBuild(context);
         await context.addInitScript(() => {
           const stages: { stage: string; time: number }[] = [];
@@ -214,7 +215,7 @@ try {
                 transform: style.transform,
                 translate: style.translate,
                 opacity: style.opacity,
-                inline: node.getAttribute('style'),
+                inline: node.getAttribute('style') ?? '',
               };
             }),
           );

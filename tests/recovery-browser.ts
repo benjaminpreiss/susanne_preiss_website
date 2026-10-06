@@ -1,17 +1,47 @@
 import { chromium, type Page } from 'playwright';
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join, resolve, extname } from 'node:path';
 
 const output = process.argv[2];
 if (!output) throw new Error('Supply a new evidence directory');
 await mkdir(output, { recursive: false });
 const site = process.env.TEST_SITE ?? 'http://127.0.0.1:4321';
 const browser = await chromium.connectOverCDP(process.env.TEST_CDP ?? 'http://127.0.0.1:9222');
+const replay = process.env.TEST_LOCAL_BUILD === '1';
+async function createContext(options: Parameters<typeof browser.newContext>[0] = {}) {
+  const context = await browser.newContext(options);
+  if (replay)
+    await context.route(`${site}/**`, async (route) => {
+      const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
+      const file = resolve(
+        'dist',
+        `.${pathname}`,
+        ...(pathname.endsWith('/') ? ['index.html'] : []),
+      );
+      if (!file.startsWith(resolve('dist') + '/')) return route.abort();
+      const types: Record<string, string> = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css',
+        '.svg': 'image/svg+xml',
+      };
+      try {
+        await route.fulfill({
+          body: await readFile(file),
+          contentType: types[extname(file)] ?? 'application/octet-stream',
+        });
+      } catch {
+        await route.fulfill({ status: 404 });
+      }
+    });
+  return context;
+}
 const errors: string[] = [];
 const results: unknown[] = [];
 async function settled(page: Page, path: string) {
-  await page.waitForURL((url) => url.pathname === path);
+  // ClientRouter Back may swap the document without a new load/DOMContentLoaded event.
+  await page.waitForURL((url) => url.pathname === path, { waitUntil: 'commit' });
   await page.waitForFunction(
     () =>
       !document.documentElement.dataset.routePhase && !document.querySelector('astro-island[ssr]'),
@@ -29,7 +59,7 @@ async function settled(page: Page, path: string) {
 try {
   for (const mobile of [false, true])
     for (const menu of [false, true]) {
-      const context = await browser.newContext({
+      const context = await createContext({
         viewport: mobile ? { width: 390, height: 664 } : { width: 1440, height: 900 },
         isMobile: mobile,
         hasTouch: mobile,
@@ -46,7 +76,7 @@ try {
         await context.route(site + target, async (route) => {
           if (route.request().isNavigationRequest()) {
             documentNavigations++;
-            await route.continue();
+            await route.fallback();
           } else {
             failedFetches++;
             await route.abort('connectionfailed');
@@ -60,7 +90,7 @@ try {
         assert.ok(failedFetches > 0);
         assert.equal(documentNavigations, 1);
         assert.notEqual(await page.evaluate(() => performance.timeOrigin), origin);
-        await page.goBack();
+        await page.goBack({ waitUntil: 'commit' });
         await settled(page, '/ueber-mich/');
         await page.locator('#menu-trigger').click();
         await page.keyboard.press('Escape');
@@ -78,7 +108,7 @@ try {
         await context.close();
       }
     }
-  const storage = await browser.newContext({ reducedMotion: 'reduce' });
+  const storage = await createContext({ reducedMotion: 'reduce' });
   try {
     await storage.addInitScript(() =>
       Object.defineProperty(window, 'sessionStorage', {
@@ -108,7 +138,7 @@ try {
   } finally {
     await storage.close();
   }
-  const outage = await browser.newContext();
+  const outage = await createContext();
   try {
     const page = await outage.newPage();
     page.on('pageerror', (error) => errors.push(error.message));
@@ -132,7 +162,7 @@ try {
   } finally {
     await outage.close();
   }
-  const history = await browser.newContext({ reducedMotion: 'reduce' });
+  const history = await createContext({ reducedMotion: 'reduce' });
   try {
     const page = await history.newPage();
     const persisted: boolean[] = [];
@@ -151,7 +181,7 @@ try {
     await link.evaluate((node) => node.setAttribute('data-astro-reload', ''));
     await link.click();
     await settled(page, '/workshops/');
-    await page.goBack();
+    await page.goBack({ waitUntil: 'commit' });
     await settled(page, '/ueber-mich/');
     assert.equal(
       await page
@@ -179,7 +209,7 @@ try {
     JSON.stringify(
       {
         site,
-        replay: false,
+        replay,
         networkFaultInjection: true,
         browser: browser.version(),
         results,
