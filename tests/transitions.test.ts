@@ -1,6 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { motionSteps } from '../src/interactions/page-motion';
+import {
+  homeContentSteps,
+  homeMenuContentSteps,
+  motionSteps,
+} from '../src/interactions/page-motion';
 
 test('content exits left, utilities fade, and content returns from the left', () => {
   assert.deepEqual(motionSteps('content', 'exit', false)[0]?.pose, { opacity: 0, xPercent: -100 });
@@ -31,6 +35,16 @@ test('menu departure does not compete with its existing content/footer transform
     motionSteps('content', 'exit', false, true).map((step) => step.selector),
     ['dialog[open] .main-navigation', 'dialog[open] .dismiss-menu'],
   );
+});
+test('homepage menu splits and fades portrait panels without changing route or desktop motion', () => {
+  assert.deepEqual(homeMenuContentSteps(true), [
+    { selector: '.home-image', pose: { y: '-100vh', opacity: 0 }, duration: 0.7 },
+    { selector: '.home-copy', pose: { y: '100vh', opacity: 0 }, duration: 0.7 },
+  ]);
+  assert.deepEqual(homeMenuContentSteps(false), homeContentSteps(false));
+  assert.deepEqual(homeContentSteps(true), [
+    { selector: '.homepage', pose: { y: '-100vh', opacity: 0 }, duration: 0.7 },
+  ]);
 });
 test('homepage splits desktop panels including content; portrait exits upwards as one surface', () => {
   for (const phase of ['exit', 'entry'] as const) {

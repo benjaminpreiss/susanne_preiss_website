@@ -205,6 +205,20 @@ try {
           .locator('#tile-workshops')
           .evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).a);
         assert.ok(Math.abs(scale - (reduced ? 1 : 1.1)) < 0.001);
+        const panelState = () =>
+          page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.map((node) => {
+              const style = getComputedStyle(node);
+              return {
+                className: node.className,
+                transform: style.transform,
+                translate: style.translate,
+                opacity: style.opacity,
+                inline: node.getAttribute('style'),
+              };
+            }),
+          );
+        const beforeMenuPanels = await panelState();
         await page.locator('#menu-trigger').click();
         if (!reduced) {
           await page.waitForTimeout(150);
@@ -217,9 +231,42 @@ try {
             'Menu waits for homepage exit',
           );
           const pose = await page
-            .locator(mobile ? '.homepage' : '#section-workshops .home-left')
+            .locator(mobile ? '#section-workshops .home-image' : '#section-workshops .home-left')
             .evaluate((node) => getComputedStyle(node).transform);
           assert.notEqual(pose, 'none');
+          if (mobile) {
+            const panels = await page.locator('.home-panel').evaluateAll((nodes) =>
+              nodes.map((node) => ({
+                active:
+                  node.closest<HTMLElement>('.home-section')?.dataset.homeSection ===
+                  document.documentElement.dataset.homeSection,
+                image: node.classList.contains('home-image'),
+                y: new DOMMatrix(getComputedStyle(node).transform).m42,
+                opacity: Number(getComputedStyle(node).opacity),
+              })),
+            );
+            assert.equal(panels.filter((panel) => panel.active).length, 2);
+            for (const panel of panels) {
+              if (panel.active) {
+                assert.ok(
+                  panel.image ? panel.y < 0 : panel.y > 0,
+                  'active image up, active text down',
+                );
+                assert.ok(
+                  panel.opacity > 0 && panel.opacity < 1,
+                  'both active panels fade while moving',
+                );
+              } else {
+                assert.equal(panel.y, 0, 'off-screen panels never move into view');
+                assert.equal(panel.opacity, 1, 'off-screen panels are untouched');
+              }
+            }
+            assert.equal(
+              await page.locator('.homepage').evaluate((node) => getComputedStyle(node).transform),
+              'none',
+              'menu opening does not translate the whole homepage',
+            );
+          }
         }
         await page.waitForTimeout(reduced ? 50 : 1300);
         assert.equal(
@@ -233,6 +280,22 @@ try {
         await page.waitForFunction(() => !document.querySelector('dialog[open]'));
         assert.ok(Math.abs((await page.evaluate(() => scrollY)) - before) < 3);
         assert.equal(await page.evaluate(() => document.activeElement?.id), 'menu-trigger');
+        const afterMenuPanels = await panelState();
+        results.push({ name, beforeMenuPanels, afterMenuPanels });
+        assert.deepEqual(
+          afterMenuPanels,
+          beforeMenuPanels,
+          'restores viewport-relative panel styles',
+        );
+        assert.ok(
+          await page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.every((node) => {
+              const style = getComputedStyle(node);
+              return new DOMMatrix(style.transform).isIdentity && Number(style.opacity) === 1;
+            }),
+          ),
+          'closing restores panel transforms and opacity',
+        );
         for (const [trigger, path] of [
           ['#footer-contact', '/kontakt/'],
           ['#footer-imprint', '/impressum/'],
@@ -347,6 +410,15 @@ try {
         assert.equal(
           await page.locator('.homepage').evaluate((node) => (node as HTMLElement).style.transform),
           '',
+        );
+        assert.ok(
+          await page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.every((node) => {
+              const style = getComputedStyle(node);
+              return new DOMMatrix(style.transform).isIdentity && Number(style.opacity) === 1;
+            }),
+          ),
+          'interrupted menu opening restores every panel',
         );
         // Native wheel and keyboard reach subsequent content without hijacked input.
         await page.mouse.move(100, 300);

@@ -26,6 +26,16 @@ export function homeContentSteps(mobile: boolean): MotionStep[] {
       ];
 }
 
+/** Menu opening splits portrait panels; route changes retain whole-page motion. */
+export function homeMenuContentSteps(mobile: boolean): MotionStep[] {
+  return mobile
+    ? [
+        { selector: '.home-image', pose: { y: '-100vh', opacity: 0 }, duration: 0.7 },
+        { selector: '.home-copy', pose: { y: '100vh', opacity: 0 }, duration: 0.7 },
+      ]
+    : homeContentSteps(false);
+}
+
 /** Homepage motion never inherits the content-page leftward exit or mobile toggle fade. */
 export function motionSteps(
   kind: PageKind,

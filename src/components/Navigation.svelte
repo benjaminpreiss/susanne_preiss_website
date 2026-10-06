@@ -5,7 +5,7 @@
   import type { navigationModel } from '../lib/content/navigation';
   import { pageInteractions, type SectionState } from '../interactions/page';
   import { restoreHistoryFocus } from '../interactions/navigation';
-  import { homeContentSteps } from '../interactions/page-motion';
+  import { homeMenuContentSteps } from '../interactions/page-motion';
 
   interface Props {
     strings: UIStrings;
@@ -101,6 +101,22 @@
     dialog.showModal();
     dialog.querySelector<HTMLButtonElement>('[data-dismiss]')?.focus({ preventScroll: true });
     animation = gsap.context(() => {
+      const portraitHome = isHome && window.matchMedia('(max-aspect-ratio: 1/1)').matches;
+      // Moving every section lets the next slide's image enter the viewport from below.
+      // Capture one active slide for the whole reversible timeline.
+      const homeScope = portraitHome
+        ? [...document.querySelectorAll<HTMLElement>('.home-section')].find(
+            (node) => node.dataset.homeSection === section?.key,
+          )
+        : document;
+      // GSAP folds individual CSS translate into a pixel transform while parsing.
+      // Restore the original styles on every revert so the dvh offsets stay responsive.
+      const panels = isHome
+        ? [...(homeScope?.querySelectorAll<HTMLElement>('.home-panel') ?? [])].map((node) => ({
+            node,
+            style: node.getAttribute('style'),
+          }))
+        : [];
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const timeline = gsap.timeline({ onReverseComplete: finishClose });
       transition = timeline;
@@ -112,9 +128,9 @@
         reduce ? 0 : isHome ? 0.7 : 0.5,
       );
       if (isHome) {
-        for (const step of homeContentSteps(window.matchMedia('(max-aspect-ratio: 1/1)').matches)) {
+        for (const step of homeMenuContentSteps(portraitHome)) {
           timeline.to(
-            document.querySelectorAll(step.selector),
+            homeScope?.querySelectorAll(step.selector) ?? [],
             { ...step.pose, duration: reduce ? 0 : step.duration, ease: 'power1.inOut' },
             0,
           );
@@ -169,6 +185,22 @@
         { rotation: 0, top: '90%', duration: reduce ? 0 : 0.4 },
         0,
       );
+      return () => {
+        // Clear GSAP's parsed transform cache before restoring CSS-owned offsets;
+        // otherwise reopening reuses pixel y while applying CSS translate a second time.
+        if (panels.length)
+          gsap.set(
+            panels.map(({ node }) => node),
+            { clearProps: 'transform' },
+          );
+        for (const { node, style } of panels) {
+          if (style === null) node.removeAttribute('style');
+          else node.setAttribute('style', style);
+        }
+        // Commit the restored offset while the open dialog still suppresses its CSS transition.
+        // Closing the dialog must not start a second animation from zero to 10dvh.
+        panels[0]?.node.getBoundingClientRect();
+      };
     });
   }
   function close() {

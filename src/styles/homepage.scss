@@ -261,6 +261,11 @@ html[data-page-kind='home'] {
   }
 }
 @media (max-aspect-ratio: 1/1) {
+  // GSAP absorbs the individual translate into its transform during menu motion.
+  // Do not simultaneously interpolate that same offset back to zero in CSS.
+  html[data-page-kind='home']:has(dialog[open]) .home-section .home-copy {
+    transition: none;
+  }
   html[data-page-kind='home'][data-home-mobile-menu-tone='light'] .site-header .menu {
     color: #efeae3;
   }
