@@ -107,7 +107,8 @@ it—do not assume a green PR proves a master run or introduce credentials silen
 Ticket 10 uses **independent native Cloudflare builds**, not deployment of the GitHub
 artifact. Cloudflare does not wait for master validation; enforce the PR gate and
 restrict direct/bypass pushes. GitHub's master artifacts are diagnostic only.
-Production remains disabled; this setup does not authorize deployment or DNS changes.
+Production activation and indexing are controlled separately by the selected Cloudflare
+deploy command; dependency automation does not authorize deployment or DNS changes.
 
 ## Owner activation checklist
 
