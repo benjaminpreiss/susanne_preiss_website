@@ -96,6 +96,41 @@ function splitDesktop(timeline: gsap.core.Timeline, document: Document, entering
   }
 }
 
+/** Shared portrait split for menu and route stages; neighboring slides never move. */
+function splitPortrait(
+  timeline: gsap.core.Timeline,
+  document: Document,
+  sectionKey: string | undefined,
+  entering = false,
+) {
+  const section = [...document.querySelectorAll<HTMLElement>('.home-section')].find(
+    (node) => node.dataset.homeSection === sectionKey,
+  );
+  // CSS viewport-unit offsets stay independent of image growth and text translation.
+  tween(
+    timeline,
+    section,
+    '.home-image',
+    {
+      '--panel-motion-y': '-100vh',
+      opacity: 0,
+      duration: 0.7,
+    },
+    entering,
+  );
+  tween(
+    timeline,
+    section,
+    '.home-copy',
+    {
+      '--panel-motion-y': '100vh',
+      opacity: 0,
+      duration: 0.7,
+    },
+    entering,
+  );
+}
+
 /**
  * Build a reversible menu sequence: content/controls leave, then menu links appear.
  * Closing reverses that same sequence, including an opening interrupted halfway.
@@ -111,25 +146,10 @@ export function createMenuMotion(
 ) {
   const home = document.documentElement.dataset.pageKind === 'home';
   const portrait = document.defaultView!.matchMedia('(max-aspect-ratio: 1/1)').matches;
-  const section = [...document.querySelectorAll<HTMLElement>('.home-section')].find(
-    (node) => node.dataset.homeSection === options.sectionKey,
-  );
   return managedTimeline(document, (timeline) => {
     // Stage 1: move the underlying page and controls out together.
-    if (home && portrait) {
-      // Keep menu offsets in CSS viewport units rather than GSAP's cached pixel transforms.
-      // Image growth and the text's viewport-relative translation remain independent of menu motion.
-      tween(timeline, section, '.home-image', {
-        '--menu-panel-y': '-100vh',
-        opacity: 0,
-        duration: 0.7,
-      });
-      tween(timeline, section, '.home-copy', {
-        '--menu-panel-y': '100vh',
-        opacity: 0,
-        duration: 0.7,
-      });
-    } else if (home) splitDesktop(timeline, document);
+    if (home && portrait) splitPortrait(timeline, document, options.sectionKey);
+    else if (home) splitDesktop(timeline, document);
     else tween(timeline, document, 'main.content', { xPercent: -100, opacity: 0, duration: 0.25 });
 
     if (home) {
@@ -199,36 +219,18 @@ export function createPageMotion(
   const utility = document.documentElement.dataset.pageKind === 'utility';
   const view = document.defaultView!;
   const portrait = view.matchMedia('(max-aspect-ratio: 1/1)').matches;
-  const touch = view.matchMedia('(pointer: coarse)').matches;
   const motion = managedTimeline(document, (timeline) => {
     // Reduced route motion must not briefly paint an off-screen entrance pose.
     if (view.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (options.menuOpen) {
       // The page is already out of view. Only the visible menu surface leaves now.
       tween(timeline, document, 'dialog[open] .main-navigation', { opacity: 0, duration: 0.5 });
-      tween(timeline, document, 'dialog[open] .dismiss-menu', {
-        ...(touch && !home ? { opacity: 0 } : { xPercent: 300 }),
-        duration: 0.5,
-      });
       return;
     }
     if (home) {
       if (portrait)
-        tween(
-          timeline,
-          document,
-          '.homepage',
-          { y: '-100vh', opacity: 0, duration: 0.7 },
-          entering,
-        );
+        splitPortrait(timeline, document, document.documentElement.dataset.homeSection, entering);
       else splitDesktop(timeline, document, entering);
-      tween(
-        timeline,
-        document,
-        '#menu-trigger',
-        { xPercent: 300, color: '#2b2c36', duration: 0.5 },
-        entering,
-      );
       tween(
         timeline,
         document,
@@ -236,7 +238,6 @@ export function createPageMotion(
         { '--controls-motion-x': '300%', color: '#333', duration: 0.5 },
         entering,
       );
-      tween(timeline, document, '.site-footer', { color: '#000', duration: 0.4 }, entering);
     } else {
       const slide = !utility && (!entering || options.returning);
       tween(
@@ -246,49 +247,10 @@ export function createPageMotion(
         { opacity: 0, ...(slide ? { xPercent: -100 } : {}), duration: slide ? 0.25 : 0.3 },
         entering,
       );
-      if (utility)
-        tween(timeline, document, '#page-return', { opacity: 0, duration: 0.35 }, entering);
-      else {
-        tween(
-          timeline,
-          document,
-          '.header-background',
-          { xPercent: -100, duration: 0.25 },
-          entering,
-        );
-        tween(
-          timeline,
-          document,
-          '.site-header .home',
-          { xPercent: -300, duration: 0.25 },
-          entering,
-        );
-        tween(
-          timeline,
-          document,
-          '#menu-trigger',
-          { ...(touch ? { opacity: 0 } : { xPercent: 300 }), duration: 0.5 },
-          entering,
-        );
-      }
     }
-    if (!utility) {
-      tween(
-        timeline,
-        document,
-        '.site-footer .legal a',
-        { yPercent: 500, duration: 0.5 },
-        entering,
-      );
-      tween(
-        timeline,
-        document,
-        '#footer-contact',
-        { yPercent: 200, duration: entering ? 0.5 : 0.35 },
-        entering,
-      );
-    }
-    tween(timeline, document, '.language-links', { opacity: 0, duration: 0.25 }, entering);
+    // Navigation stays in place. Only its colour changes for contrast while content is absent.
+    tween(timeline, document, '#menu-trigger', { color: '#2b2c36', duration: 0.25 }, entering);
+    tween(timeline, document, '.site-footer', { color: '#000', duration: 0.25 }, entering);
   });
   return { run: motion.open, destroy: motion.destroy };
 }

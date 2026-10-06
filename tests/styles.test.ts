@@ -61,10 +61,7 @@ test('portrait image growth preserves section height and its fixed beige gap', (
     css,
     /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100svh;/,
   );
-  assert.match(
-    css,
-    /\.home-image\{flex:00auto;height:calc\(50svh\+100dvh-100svh\);margin-bottom:calc\(100svh-100dvh\);transition:height0\.3sease,margin-bottom0\.3sease;/,
-  );
+  assert.match(css, /\.home-image\{flex:00auto;height:50svh;overflow:visible;contain:layout;/);
   assert.match(css, /\.home-copy\{flex:10auto;min-height:50svh;padding:0;/);
   assert.match(css, /\.home-intro\.home-image\{order:-1;\}/);
   assert.match(css, /\.home-intro\.home-copy\{overflow:visible;\}/);
@@ -75,6 +72,11 @@ test('portrait image growth preserves section height and its fixed beige gap', (
   assert.match(css, /translate:0calc\(100dvh-100svh\);transition:translate0\.3sease;/);
   assert.match(css, /scroll-margin-bottom:calc\(100dvh-100svh\);/);
   assert.doesNotMatch(css, /body::after/);
+  assert.match(
+    css,
+    /display:block;position:absolute;inset:00auto;width:100%;height:calc\(50svh\+100dvh-100svh\);overflow:hidden;transition:height0\.3sease;/,
+  );
+  assert.doesNotMatch(css, /clip-path|transition:[^;}]*margin-bottom/);
   assert.doesNotMatch(css, /(?:margin-bottom:-10dvh|translate:010dvh|padding-bottom:10dvh)/);
 });
 

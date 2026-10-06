@@ -25,7 +25,7 @@ context.setDefaultTimeout(10_000);
 const results: unknown[] = [];
 try {
   const page = await context.newPage();
-  await page.setContent(`<html data-page-kind="content"><head><style>${compile('src/styles/site.scss').css}</style></head><body>
+  await page.setContent(`<html data-page-kind="content"><head><style>${compile('src/styles/site.scss').css}\n${compile('src/styles/homepage.scss').css}</style></head><body>
     <header class="site-header"><span class="header-background"></span><a class="home"></a><button id="menu-trigger" class="menu"></button></header>
     <main class="content" style="color:rgb(13, 14, 15)">Controlled content</main>
     <footer class="site-footer"><div class="legal"><a>Legal</a></div><a id="footer-contact">Contact</a></footer>
@@ -54,6 +54,10 @@ try {
     const outgoing = {
       transform: getComputedStyle(main).transform,
       opacity: getComputedStyle(main).opacity,
+      toggleOpacity: getComputedStyle(document.querySelector('#menu-trigger')!).opacity,
+      toggleTransform: getComputedStyle(document.querySelector('#menu-trigger')!).transform,
+      footerOpacity: getComputedStyle(document.querySelector('footer')!).opacity,
+      contactTransform: getComputedStyle(document.querySelector('#footer-contact')!).transform,
     };
     exit.destroy();
     const entry = window.motionFixture.createPageMotion(document, {
@@ -80,11 +84,28 @@ try {
   });
   results.push({ route });
   assert.equal(route.outgoing.opacity, '0');
+  assert.equal(route.outgoing.toggleOpacity, '1');
+  assert.equal(route.outgoing.toggleTransform, 'none');
+  assert.equal(route.outgoing.footerOpacity, '1');
+  assert.equal(route.outgoing.contactTransform, 'none');
   assert.notEqual(route.outgoing.transform, 'none');
   assert.equal(route.prepared.opacity, '0');
   assert.notEqual(route.prepared.transform, 'none');
   assert.deepEqual(route.restored, { inline: route.original, opacity: '1', transform: 'none' });
   assert.equal(route.cancelled, route.original);
+  const swapVisibility = await page.evaluate(() => {
+    document.documentElement.dataset.routePhase = 'swapping';
+    const visibility = ['main', '.site-header', '.site-footer'].map(
+      (selector) => getComputedStyle(document.querySelector(selector)!).visibility,
+    );
+    document.documentElement.removeAttribute('data-route-phase');
+    return visibility;
+  });
+  assert.deepEqual(
+    swapVisibility,
+    ['hidden', 'visible', 'visible'],
+    'swap cleanup hides content, not navigation',
+  );
 
   for (const reducedMotion of ['no-preference', 'reduce'] as const) {
     await page.emulateMedia({ reducedMotion });
@@ -104,6 +125,8 @@ try {
       });
       await exit.run();
       const departed = getComputedStyle(dialog.querySelector('.main-navigation')!).opacity;
+      const toggleOpacity = getComputedStyle(dialog.querySelector('.dismiss-menu')!).opacity;
+      const toggleTransform = getComputedStyle(dialog.querySelector('.dismiss-menu')!).transform;
       exit.destroy();
       motion.resume();
       const recovered = getComputedStyle(dialog.querySelector('.main-navigation')!).opacity;
@@ -111,11 +134,13 @@ try {
       motion.destroy();
       const closed = getComputedStyle(main).opacity;
       dialog.close();
-      return { open, departed, recovered, closed };
+      return { open, departed, recovered, closed, toggleOpacity, toggleTransform };
     });
     results.push({ reducedMotion, menu });
     assert.equal(menu.open, '0');
     assert.equal(menu.departed, reducedMotion === 'reduce' ? '1' : '0');
+    assert.equal(menu.toggleOpacity, '1');
+    assert.equal(menu.toggleTransform, 'none');
     assert.equal(menu.recovered, '1');
     assert.equal(menu.closed, '1');
   }
@@ -225,6 +250,45 @@ try {
     assert.equal(portrait.inlineTranslate, '');
     results.push({ cycle, portrait });
   }
+  // Portrait route stages reuse the menu split, never move the whole homepage past its neighbors.
+  const homeRoute = await page.evaluate(async () => {
+    document.documentElement.dataset.homeSection = 'active';
+    const image = document.querySelector('.home-image')!;
+    const copy = document.querySelector('.home-copy')!;
+    const neighbor = document.querySelector('[data-home-section="neighbor"] .home-image')!;
+    const [readPose] = [
+      () => ({
+        imageY: new DOMMatrix(getComputedStyle(image).transform).m42,
+        copyY: new DOMMatrix(getComputedStyle(copy).transform).m42,
+        imageOpacity: getComputedStyle(image).opacity,
+        copyOpacity: getComputedStyle(copy).opacity,
+        neighborTransform: getComputedStyle(neighbor).transform,
+        neighborOpacity: getComputedStyle(neighbor).opacity,
+        wrapper: getComputedStyle(document.querySelector('.homepage')!).transform,
+      }),
+    ];
+    const before = readPose!();
+    const exit = window.motionFixture.createPageMotion(document, { entering: false });
+    await exit.run();
+    const outgoing = readPose!();
+    exit.destroy();
+    const entry = window.motionFixture.createPageMotion(document, { entering: true });
+    const prepared = readPose!();
+    await entry.run();
+    entry.destroy();
+    return { before, outgoing, prepared, restored: readPose!() };
+  });
+  results.push({ homeRoute });
+  for (const pose of [homeRoute.outgoing, homeRoute.prepared]) {
+    assert.equal(pose.wrapper, 'none', 'route must not translate the entire homepage');
+    assert.ok(pose.imageY < 0, 'active image leaves above the viewport');
+    assert.ok(pose.copyY > 0, 'active text leaves below the viewport');
+    assert.equal(pose.imageOpacity, '0');
+    assert.equal(pose.copyOpacity, '0');
+    assert.equal(pose.neighborTransform, homeRoute.before.neighborTransform);
+    assert.equal(pose.neighborOpacity, '1', 'neighbor is not animated');
+  }
+  assert.deepEqual(homeRoute.restored, homeRoute.before);
   await page.setContent('<html data-page-kind="content"><body></body></html>');
   await page.evaluate(async () => {
     const motion = window.motionFixture.createPageMotion(document, { entering: false });

@@ -918,7 +918,9 @@ body[data-utility] .site-footer {
 
 // The shared motion module owns live-element timelines; ClientRouter owns loading/history/swapping.
 // No cross-document opt-in, including when JavaScript is disabled.
-html[data-route-phase='swapping'] body {
+// Hide only outgoing content during cleanup; header/footer controls remain visible.
+html[data-route-phase='swapping'] main,
+html[data-route-phase='swapping'] .shared-dialog .main-navigation {
   visibility: hidden;
 }
 main:focus {

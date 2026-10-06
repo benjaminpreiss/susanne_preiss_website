@@ -26,6 +26,24 @@ try {
     const page = await context.newPage();
     await page.goto(site, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
+    assert.ok(
+      await page.locator('.home-image > picture, .home-image > img').evaluateAll(
+        (frames) =>
+          frames.length > 0 &&
+          frames.every((frame) => {
+            const image = frame instanceof HTMLImageElement ? frame : frame.querySelector('img')!;
+            return (
+              getComputedStyle(frame).position === 'absolute' &&
+              frame.getBoundingClientRect().height > 0 &&
+              Math.abs(
+                frame.getBoundingClientRect().height - image.getBoundingClientRect().height,
+              ) < 1 &&
+              getComputedStyle(image).objectFit === 'cover'
+            );
+          }),
+      ),
+      'production image frames are real sizing boxes, not display: contents wrappers',
+    );
     await page.waitForFunction(() => document.documentElement.dataset.homeSection !== undefined);
     // Ordinary tile and intro, twice each to catch offset drift on reopen.
     for (const index of [1, 0]) {

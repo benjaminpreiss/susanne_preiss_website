@@ -25,11 +25,14 @@ try {
       <style>body { margin: 0; } ${css}
         .probe { position: absolute; visibility: hidden; width: 0; }
         #large { height: 100lvh; } #small { height: 100svh; }
+        picture.responsive-image { display: contents; }
       </style></head><body>
       <div class="probe" id="large"></div><div class="probe" id="small"></div>
       <main class="content">${['home-intro', 'home-tile image-left', 'home-tile image-right']
         .map((kind, index) => {
-          const image = '<div class="home-panel home-image"></div>';
+          const src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="steelblue"/></svg>')}`;
+          const img = `<img src="${src}" width="800" height="600" alt="">`;
+          const image = `<div class="home-panel home-image">${index === 2 ? img : `<picture class="responsive-image">${img}</picture>`}</div>`;
           const copy = `<div class="home-panel home-copy"><${index ? 'a class="home-tile-link" href="#fixture-0"' : 'div class="home-text"'}><h${index ? '2' : '1'}>Sample</h${index ? '2' : '1'}><p>Brief text.</p></${index ? 'a' : 'div'}></div>`;
           return `<section id="fixture-${index}" class="home-section ${kind}">${index ? image + copy : copy + image}</section>`;
         })
@@ -133,7 +136,7 @@ try {
     // Reduced motion must disable image growth, flow compensation and text translation.
     assert.ok(
       await page
-        .locator('.home-section, .home-panel')
+        .locator('.home-section, .home-panel, .home-image > picture, .home-image > img')
         .evaluateAll((panels) =>
           panels.every((panel) => getComputedStyle(panel).transitionDuration === '0s'),
         ),
@@ -180,14 +183,40 @@ try {
         );
         near(
           (await section.locator('.home-image').boundingBox())!.height,
-          small / 2 + height - small,
-          'image absorbs toolbar space',
+          small / 2,
+          'image slot stays half the small viewport',
         );
         near(
           (await section.locator('.home-copy').boundingBox())!.height,
           small / 2,
           'copy target remains half the small viewport',
         );
+        const visible = await section.evaluate((node) => {
+          const frame = node.querySelector('.home-image > picture, .home-image > img')!;
+          const image = node.querySelector('.home-image img')!;
+          const rect = frame.getBoundingClientRect();
+          return {
+            imageHeight: rect.height,
+            renderedImageHeight: image.getBoundingClientRect().height,
+            fit: getComputedStyle(image).objectFit,
+            position: getComputedStyle(frame).position,
+            imageBottom: rect.bottom,
+            copyTop: node.querySelector('.home-copy')!.getBoundingClientRect().top,
+          };
+        });
+        near(
+          visible.imageHeight,
+          small / 2 + height - small,
+          'visible image absorbs toolbar space',
+        );
+        near(
+          visible.renderedImageHeight,
+          visible.imageHeight,
+          'the actual image resizes with its frame',
+        );
+        assert.equal(visible.fit, 'cover');
+        assert.equal(visible.position, 'absolute', 'resizing frame stays out of normal flow');
+        near(visible.imageBottom, visible.copyTop, 'text follows the resized image edge');
         await section.evaluate((node) =>
           node.scrollIntoView({ block: 'start', behavior: 'instant' }),
         );
@@ -215,13 +244,25 @@ try {
     }
     // Keep small/large units fixed and change only dvh: model chrome retraction/expansion.
     // Inspect visible geometry at the halfway point, not merely computed offsets.
+    await page
+      .locator('#fixture-1')
+      .evaluate((node) => node.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await page.waitForFunction(
+      () => Math.abs(document.getElementById('fixture-1')!.getBoundingClientRect().top) < 1,
+    );
+    // Allow the preceding wheel gesture and native snap-target bookkeeping to settle.
+    await page.waitForTimeout(400);
+    const anchoredScroll = await page.evaluate(() => scrollY);
     await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const afterMedia = await page.evaluate(() => scrollY);
     for (const height of [small, large]) {
       await page.setViewportSize({ width: 390, height });
+      const afterResize = await page.evaluate(() => scrollY);
       const animation = await page.locator('.home-section').evaluateAll((sections) => {
         const transitions = sections.flatMap((section) => [
           ...section.getAnimations(),
           ...section.querySelector('.home-image')!.getAnimations(),
+          ...section.querySelector('.home-image > picture, .home-image > img')!.getAnimations(),
           ...section.querySelector('.home-copy')!.getAnimations(),
         ]);
         for (const transition of transitions) {
@@ -231,9 +272,15 @@ try {
         const samples = sections.map((section, index) => {
           const rect = section.getBoundingClientRect();
           const image = section.querySelector('.home-image')!.getBoundingClientRect();
+          const frame = section
+            .querySelector('.home-image > picture, .home-image > img')!
+            .getBoundingClientRect();
           const copy = section.querySelector('.home-copy')!.getBoundingClientRect();
           return {
             imageHeight: image.height,
+            frameHeight: frame.height,
+            renderedImageHeight: section.querySelector('.home-image img')!.getBoundingClientRect()
+              .height,
             sectionHeight: rect.height,
             imageMargin: parseFloat(
               getComputedStyle(section.querySelector('.home-image')!).marginBottom,
@@ -246,13 +293,36 @@ try {
           };
         });
         const timings = transitions.map((transition) => transition.effect!.getTiming());
+        const properties = transitions.map((transition) =>
+          transition instanceof CSSTransition ? transition.transitionProperty : 'other',
+        );
         for (const transition of transitions) transition.finish();
-        return { timings, samples };
+        return { timings, properties, samples, scroll: scrollY };
       });
+      // Viewport resizing can itself trigger native re-snapping (also with a fixed image).
+      // Check that interpolating the absolute frame adds no further document movement.
+      results.push({
+        viewportScroll: {
+          anchoredScroll,
+          afterMedia,
+          afterResize,
+          duringAnimation: animation.scroll,
+          height,
+        },
+      });
+      near(
+        animation.scroll,
+        afterResize,
+        'frame interpolation does not move the document after native viewport adjustment',
+      );
       assert.equal(
         animation.timings.length,
-        9,
-        'height, negative margin and translation animate on all sections',
+        6,
+        'only absolute frame height and text translation animate',
+      );
+      assert.ok(
+        animation.properties.every((property) => ['height', 'translate'].includes(property)),
+        'toolbar animation uses real frame resizing and text translation',
       );
       for (const timing of animation.timings) {
         assert.equal(timing.duration, 300);
@@ -260,10 +330,16 @@ try {
       }
       for (const sample of animation.samples) {
         assert.ok(
-          sample.imageHeight > small / 2 && sample.imageHeight < small / 2 + large - small,
+          sample.frameHeight > small / 2 && sample.frameHeight < small / 2 + large - small,
           'image visibly interpolates rather than jumping',
         );
-        near(sample.copyTop, sample.imageHeight, 'text moves down with the growing image');
+        near(sample.imageHeight, small / 2, 'image slot never resizes during animation');
+        near(
+          sample.renderedImageHeight,
+          sample.frameHeight,
+          'image box genuinely resizes, not clipping',
+        );
+        near(sample.copyTop, sample.frameHeight, 'text follows the resized image edge');
         near(sample.sectionHeight, small, 'section stays fixed during animation');
         near(sample.gap, large - small, 'beige gap stays fixed during animation');
         near(
@@ -302,11 +378,7 @@ try {
             overflow: getComputedStyle(copy).overflowY,
           };
         });
-        near(
-          box.imageHeight,
-          small / 2 + height - small,
-          'long copy does not enlarge/shrink image',
-        );
+        near(box.imageHeight, small / 2, 'long copy does not enlarge/shrink image slot');
         near(box.height, small / 2 + box.copyHeight, 'tall section uses stable layout footprint');
         assert.ok(box.height > 844, 'section grows');
         assert.ok(box.contentTop >= -1 && box.contentBottom >= -1, 'copy is contained');

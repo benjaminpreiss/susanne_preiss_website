@@ -23,13 +23,18 @@ test('one shared module owns GSAP choreography and its dependency', () => {
 });
 
 test('menu and controls offsets stay separate from viewport layout and centering', () => {
-  assert.match(css, /transform: translateY\(var\(--menu-panel-y, 0px\)\)/);
+  assert.match(css, /transform: translateY\(var\(--panel-motion-y, 0px\)\)/);
   assert.match(css, /transform: translateX\(var\(--controls-motion-x, 0px\)\)/);
   assert.match(css, /height: calc\(50svh \+ 100dvh - 100svh\)/);
   assert.match(css, /translate: 0 -50%/);
-  assert.match(source, /node\.dataset\.homeSection === options\.sectionKey/);
-  assert.match(source, /tween\(timeline, section, '\.home-image'/);
-  assert.match(source, /tween\(timeline, section, '\.home-copy'/);
+  assert.match(source, /node\.dataset\.homeSection === sectionKey/);
+  assert.match(source, /tween\(\s*timeline,\s*section,\s*'\.home-image'/);
+  assert.match(source, /tween\(\s*timeline,\s*section,\s*'\.home-copy'/);
+  assert.match(source, /splitPortrait\(timeline, document, options\.sectionKey\)/);
+  assert.match(
+    source,
+    /splitPortrait\(timeline, document, document\.documentElement\.dataset\.homeSection, entering\)/,
+  );
 });
 
 test('GSAP supplies reversal and style cleanup rather than a replacement animation engine', () => {

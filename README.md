@@ -96,13 +96,18 @@ fixture builds. Production activation is separately approved after tickets 08–
 The accepted ClientRouter lifecycle sequences exit → swap → entrance and owns
 history/focus/cleanup. All GSAP choreography lives in `src/interactions/motion.ts`:
 `createMenuMotion` opens/closes one reversible timeline; `createPageMotion` runs one
-exit or entrance stage. Both restore original styles on destruction, settle pending
+exit or entrance stage. Both share the active-slide image-up/text-down split in
+portrait; page transitions keep the toggle and footer controls in place. Both restore original styles on destruction, settle pending
 completion promises, and handle reduced motion. Callers own dialogs and navigation,
 not animation details. Simple hover effects and viewport-relative layout stay in CSS;
 separate menu offsets leave viewport-relative layout independent. In portrait, the
-image grows by `100dvh - 100svh`, offset by an equal negative image margin and text
-translation with matching 300ms transitions. Section layout height and the fixed
-`100lvh - 100svh` beige gap do not change with browser chrome. A bottom scroll margin
+image slot stays `50svh`; an absolutely positioned picture/image frame inside it
+resizes to `50svh + 100dvh - 100svh` over 300ms, synchronized with text translation.
+The image fills that changing frame with `object-fit: cover`, so its sizing/crop
+really updates rather than revealing a clipped, fixed-size image. Layout containment
+keeps the frame's resizing out of surrounding flow; the slot and margins do not animate.
+Section layout height and the fixed `100lvh - 100svh` beige gap do not change with
+browser chrome. A bottom scroll margin
 includes translated text in the snap area without enlarging the layout box. See
 [the shared GSAP decision](docs/adr/0004-shared-gsap-motion.md).
 Native scrolling replaces fullpage.js. The menu uses a native modal dialog with
