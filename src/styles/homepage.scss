@@ -284,16 +284,14 @@ html[data-page-kind='home'] {
   .home-section,
   .home-section.image-right {
     flex-direction: column;
-    // Stable targets do not follow toolbar expansion/retraction; rotation still updates them.
-    // A minimum lets long/zoomed copy grow in the document's native scroll flow.
+    // Toolbar changes must not resize the snap box; long/zoomed copy can still grow it.
     min-height: 100svh;
-    // The beige page background fills this gap outside the section's snap area.
-    // Keep it after the last slide too, so that slide can reach the viewport top.
+    // Fixed, non-snapping beige space also reserves room for the text's visual offset.
     margin-bottom: calc(100lvh - 100svh);
-    // Reserve the translated panel's overflow without enlarging the normal slide target.
+    // Include translated content in the snap area, not the layout box. For tall copy,
+    // snap-area height minus viewport height stays constant as browser chrome changes.
+    scroll-margin-bottom: calc(100dvh - 100svh);
     box-sizing: border-box;
-    padding-bottom: 10dvh;
-    transition: padding-bottom 0.3s ease;
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
     }
@@ -304,16 +302,20 @@ html[data-page-kind='home'] {
     }
     .home-image {
       flex: 0 0 auto;
-      height: 50svh;
-      margin-bottom: -10dvh;
-      transition: margin-bottom 0.3s ease;
+      height: calc(50svh + 100dvh - 100svh);
+      // Grow visually without adding that growth to the section's layout height.
+      margin-bottom: calc(100svh - 100dvh);
+      transition:
+        height 0.3s ease,
+        margin-bottom 0.3s ease;
     }
     .home-copy {
       flex: 1 0 auto;
       min-height: 50svh;
       padding: 0;
-      // Layout translate stays independent of the menu-only transform offset.
-      translate: 0 10dvh;
+      // Follow the enlarged image visually, using the already-reserved beige gap.
+      // All three transitions share timing so the panels stay joined throughout.
+      translate: 0 calc(100dvh - 100svh);
       transition: translate 0.3s ease;
     }
   }

@@ -117,8 +117,8 @@ export function createMenuMotion(
   return managedTimeline(document, (timeline) => {
     // Stage 1: move the underlying page and controls out together.
     if (home && portrait) {
-      // Animate a dedicated transform offset, NOT GSAP's y/translate parser.
-      // The text's CSS translate: 0 10dvh remains live and independent on reopen/resize.
+      // Keep menu offsets in CSS viewport units rather than GSAP's cached pixel transforms.
+      // Image growth and the text's viewport-relative translation remain independent of menu motion.
       tween(timeline, section, '.home-image', {
         '--menu-panel-y': '-100vh',
         opacity: 0,

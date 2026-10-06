@@ -22,10 +22,10 @@ test('one shared module owns GSAP choreography and its dependency', () => {
   assert.match(readFileSync('pnpm-lock.yaml', 'utf8'), /gsap@3\.15\.0/);
 });
 
-test('menu and controls offsets do not replace viewport translation or centering', () => {
+test('menu and controls offsets stay separate from viewport layout and centering', () => {
   assert.match(css, /transform: translateY\(var\(--menu-panel-y, 0px\)\)/);
   assert.match(css, /transform: translateX\(var\(--controls-motion-x, 0px\)\)/);
-  assert.match(css, /translate: 0 10dvh/);
+  assert.match(css, /height: calc\(50svh \+ 100dvh - 100svh\)/);
   assert.match(css, /translate: 0 -50%/);
   assert.match(source, /node\.dataset\.homeSection === options\.sectionKey/);
   assert.match(source, /tween\(timeline, section, '\.home-image'/);

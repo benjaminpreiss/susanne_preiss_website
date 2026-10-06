@@ -181,7 +181,7 @@ try {
     transform: 'none',
   });
 
-  // Mobile panel motion must leave both the neighboring section and the dvh translate untouched.
+  // Mobile menu motion must leave neighboring sections and the text's layout translation untouched.
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.evaluate(() => {
     document.documentElement.dataset.pageKind = 'home';

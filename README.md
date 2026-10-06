@@ -99,7 +99,11 @@ history/focus/cleanup. All GSAP choreography lives in `src/interactions/motion.t
 exit or entrance stage. Both restore original styles on destruction, settle pending
 completion promises, and handle reduced motion. Callers own dialogs and navigation,
 not animation details. Simple hover effects and viewport-relative layout stay in CSS;
-separate menu offsets preserve the live `10dvh` translation. See
+separate menu offsets leave viewport-relative layout independent. In portrait, the
+image grows by `100dvh - 100svh`, offset by an equal negative image margin and text
+translation with matching 300ms transitions. Section layout height and the fixed
+`100lvh - 100svh` beige gap do not change with browser chrome. A bottom scroll margin
+includes translated text in the snap area without enlarging the layout box. See
 [the shared GSAP decision](docs/adr/0004-shared-gsap-motion.md).
 Native scrolling replaces fullpage.js. The menu uses a native modal dialog with
 keyboard/focus management; contact/legal destinations are ordinary pages, not overlays.

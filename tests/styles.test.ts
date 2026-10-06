@@ -55,13 +55,16 @@ test('base shorthand overrides precede responsive breakpoint overrides', () => {
   );
 });
 
-test('portrait homepage tiles share stable viewport targets and allow text to grow', () => {
+test('portrait image growth preserves section height and its fixed beige gap', () => {
   const css = compact(compile('src/styles/homepage.scss').css);
   assert.match(
     css,
     /\.home-section,\.home-section\.image-right\{flex-direction:column;min-height:100svh;/,
   );
-  assert.match(css, /\.home-image\{flex:00auto;height:50svh;/);
+  assert.match(
+    css,
+    /\.home-image\{flex:00auto;height:calc\(50svh\+100dvh-100svh\);margin-bottom:calc\(100svh-100dvh\);transition:height0\.3sease,margin-bottom0\.3sease;/,
+  );
   assert.match(css, /\.home-copy\{flex:10auto;min-height:50svh;padding:0;/);
   assert.match(css, /\.home-intro\.home-image\{order:-1;\}/);
   assert.match(css, /\.home-intro\.home-copy\{overflow:visible;\}/);
@@ -69,10 +72,10 @@ test('portrait homepage tiles share stable viewport targets and allow text to gr
   assert.match(css, /scroll-snap-type:ymandatory;/);
   assert.match(css, /scroll-snap-align:start;/);
   assert.match(css, /min-height:100svh;margin-bottom:calc\(100lvh-100svh\);/);
+  assert.match(css, /translate:0calc\(100dvh-100svh\);transition:translate0\.3sease;/);
+  assert.match(css, /scroll-margin-bottom:calc\(100dvh-100svh\);/);
   assert.doesNotMatch(css, /body::after/);
-  assert.match(css, /margin-bottom:-10dvh;transition:margin-bottom0\.3sease;/);
-  assert.match(css, /translate:010dvh;transition:translate0\.3sease;/);
-  assert.doesNotMatch(css, /(?:height|min-height):[^;]*dvh/);
+  assert.doesNotMatch(css, /(?:margin-bottom:-10dvh|translate:010dvh|padding-bottom:10dvh)/);
 });
 
 test('homepage presentation selectors depend on options, not editorial section keys', () => {

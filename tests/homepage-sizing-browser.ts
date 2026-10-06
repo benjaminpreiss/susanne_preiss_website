@@ -19,6 +19,7 @@ try {
   const context = await browser.newContext({ reducedMotion: 'reduce' });
   try {
     const page = await context.newPage();
+    page.setDefaultTimeout(10_000);
     await page.setContent(`<!doctype html><html data-page-kind="home"><head>
       <meta name="viewport" content="width=device-width, initial-scale=1">
       <style>body { margin: 0; } ${css}
@@ -84,11 +85,10 @@ try {
           near(box.height, box.small, 'section target');
           near(box.imageHeight, box.small / 2, 'image target');
           near(box.copyHeight, box.small / 2, 'copy target');
-          near(box.imageMargin, -viewport.height * 0.1, 'negative dynamic image margin');
-          near(
-            parseFloat(box.translation.split(' ')[1]!),
-            viewport.height * 0.1,
-            'dynamic copy translation',
+          near(box.imageMargin, 0, 'no negative image margin');
+          assert.ok(
+            ['0px', '0px 0px'].includes(box.translation),
+            'no offset when dynamic and small viewports coincide',
           );
           near(box.imageTop, 0, 'image first, including intro');
           near(box.copyTop, box.imageHeight, 'panels abut');
@@ -130,50 +130,7 @@ try {
       }
       results.push({ viewport, geometry, margins });
     }
-    // Exercise actual CSS transition interpolation, including the intro, in both directions.
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    for (const height of [664, 844]) {
-      await page.setViewportSize({ width: 390, height });
-      const animation = await page.locator('.home-section').evaluateAll((sections) =>
-        sections.map((section) => {
-          const image = section.querySelector('.home-image')!;
-          const copy = section.querySelector('.home-copy')!;
-          const transitions = [
-            ...section.getAnimations(),
-            ...image.getAnimations(),
-            ...copy.getAnimations(),
-          ];
-          for (const transition of transitions) {
-            transition.pause();
-            transition.currentTime = 150;
-          }
-          const value = {
-            count: transitions.length,
-            timings: transitions.map((transition) => transition.effect!.getTiming()),
-            margin: parseFloat(getComputedStyle(image).marginBottom),
-            translation: parseFloat(getComputedStyle(copy).translate.split(' ')[1]!),
-            reservation: parseFloat(getComputedStyle(section).paddingBottom),
-          };
-          for (const transition of transitions) transition.finish();
-          return value;
-        }),
-      );
-      for (const sample of animation) {
-        assert.equal(sample.count, 3, 'both offsets and their overflow reservation animate');
-        for (const timing of sample.timings) {
-          assert.equal(timing.duration, 300);
-          assert.equal(timing.easing, 'ease');
-        }
-        assert.ok(
-          sample.translation > 66.4 && sample.translation < 84.4,
-          'intermediate, not a jump',
-        );
-        near(-sample.margin, sample.translation, 'offsets interpolate in sync');
-        near(sample.reservation, sample.translation, 'overflow reservation stays in sync');
-      }
-      results.push({ animatedViewportHeight: height, animation });
-    }
-    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Reduced motion must disable image growth, flow compensation and text translation.
     assert.ok(
       await page
         .locator('.home-section, .home-panel')
@@ -186,7 +143,7 @@ try {
     // Real headless viewport units coincide, which would otherwise conceal final-slide clamping.
     const small = 664;
     const large = 844;
-    const synthetic = await page.addStyleTag({
+    await page.addStyleTag({
       content: css.replace(
         /([\d.]+)(s|l)vh/g,
         (_, value: string, unit: string) =>
@@ -204,8 +161,9 @@ try {
         })),
       );
       for (const gap of gaps) {
-        near(gap.margin, large - small, 'gap is outside the snap area, including final slide');
-        if (gap.distance !== null) near(gap.distance, large - small, 'space between slides');
+        near(gap.margin, large - small, 'fixed beige gap, including final slide');
+        if (gap.distance !== null)
+          near(gap.distance, large - small, 'fixed space between section boxes');
       }
       assert.equal(
         await page.evaluate(() => getComputedStyle(document.body, '::after').content),
@@ -215,11 +173,15 @@ try {
       const sections = await page.locator('.home-section').all();
       // Visit in both directions, including the final slide at the document boundary.
       for (const section of [...sections, ...sections.toReversed()]) {
-        near((await section.boundingBox())!.height, small, 'stable small-viewport section');
+        near(
+          (await section.boundingBox())!.height,
+          small,
+          'section height ignores toolbar changes',
+        );
         near(
           (await section.locator('.home-image').boundingBox())!.height,
-          small / 2,
-          'image target',
+          small / 2 + height - small,
+          'image absorbs toolbar space',
         );
         near(
           (await section.locator('.home-copy').boundingBox())!.height,
@@ -251,53 +213,120 @@ try {
       }
       results.push({ syntheticViewport: { small, large, visible: height }, gaps });
     }
-    await synthetic.evaluate((node) => node.parentNode?.removeChild(node));
-    await page.setViewportSize({ width: 390, height: 844 });
+    // Keep small/large units fixed and change only dvh: model chrome retraction/expansion.
+    // Inspect visible geometry at the halfway point, not merely computed offsets.
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    for (const height of [small, large]) {
+      await page.setViewportSize({ width: 390, height });
+      const animation = await page.locator('.home-section').evaluateAll((sections) => {
+        const transitions = sections.flatMap((section) => [
+          ...section.getAnimations(),
+          ...section.querySelector('.home-image')!.getAnimations(),
+          ...section.querySelector('.home-copy')!.getAnimations(),
+        ]);
+        for (const transition of transitions) {
+          transition.pause();
+          transition.currentTime = 150;
+        }
+        const samples = sections.map((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const image = section.querySelector('.home-image')!.getBoundingClientRect();
+          const copy = section.querySelector('.home-copy')!.getBoundingClientRect();
+          return {
+            imageHeight: image.height,
+            sectionHeight: rect.height,
+            imageMargin: parseFloat(
+              getComputedStyle(section.querySelector('.home-image')!).marginBottom,
+            ),
+            copyTop: copy.top - rect.top,
+            gap: parseFloat(getComputedStyle(section).marginBottom),
+            nextStart: sections[index + 1]
+              ? sections[index + 1]!.getBoundingClientRect().top - rect.top
+              : null,
+          };
+        });
+        const timings = transitions.map((transition) => transition.effect!.getTiming());
+        for (const transition of transitions) transition.finish();
+        return { timings, samples };
+      });
+      assert.equal(
+        animation.timings.length,
+        9,
+        'height, negative margin and translation animate on all sections',
+      );
+      for (const timing of animation.timings) {
+        assert.equal(timing.duration, 300);
+        assert.equal(timing.easing, 'ease');
+      }
+      for (const sample of animation.samples) {
+        assert.ok(
+          sample.imageHeight > small / 2 && sample.imageHeight < small / 2 + large - small,
+          'image visibly interpolates rather than jumping',
+        );
+        near(sample.copyTop, sample.imageHeight, 'text moves down with the growing image');
+        near(sample.sectionHeight, small, 'section stays fixed during animation');
+        near(sample.gap, large - small, 'beige gap stays fixed during animation');
+        near(
+          sample.imageHeight + sample.imageMargin,
+          small / 2,
+          'image flow footprint stays fixed',
+        );
+        if (sample.nextStart !== null)
+          near(sample.nextStart, large, 'next slide start stays fixed');
+      }
+      results.push({ animatedViewportHeight: height, animation });
+    }
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Keep the synthetic toolbar range for tall text too: translated overflow must be reachable.
+    await page.setViewportSize({ width: 390, height: large });
     // Extra copy and enlarged text must grow each section, not the image or a scroll panel.
     await page.locator('.home-copy p').evaluateAll((paragraphs) => {
       for (const paragraph of paragraphs) paragraph.textContent = 'Additional text. '.repeat(80);
       document.documentElement.style.fontSize = '32px';
     });
-    for (const section of await page.locator('.home-section').all()) {
-      const box = await section.evaluate((node) => {
-        const rect = node.getBoundingClientRect();
-        const image = node.querySelector('.home-image')!.getBoundingClientRect();
-        const copy = node.querySelector('.home-copy')!;
-        const content = copy.firstElementChild!.getBoundingClientRect();
-        const copyRect = copy.getBoundingClientRect();
-        return {
-          height: rect.height,
-          imageHeight: image.height,
-          copyHeight: copyRect.height,
-          contentTop: content.top - copyRect.top,
-          contentBottom: copyRect.bottom - content.bottom,
-          overflow: getComputedStyle(copy).overflowY,
-        };
-      });
-      near(box.imageHeight, 422, 'long copy does not enlarge/shrink image');
-      near(
-        box.height,
-        box.imageHeight + box.copyHeight,
-        'long section contains translated content',
-      );
-      assert.ok(box.height > 844, 'section grows');
-      assert.ok(box.contentTop >= -1 && box.contentBottom >= -1, 'copy is contained');
-      assert.equal(box.overflow, 'visible', 'no clipping or nested scrolling');
-      await section.evaluate((node) => {
-        const content = node.querySelector('.home-copy')!.firstElementChild!;
-        content.scrollIntoView({ block: 'end', behavior: 'instant' });
-      });
-      await page.waitForFunction(
-        (id) => {
-          const bottom = document
-            .getElementById(id)!
-            .querySelector('.home-copy')!
-            .firstElementChild!.getBoundingClientRect().bottom;
-          return bottom > 0 && bottom <= innerHeight + 1;
-        },
-        await section.evaluate((node) => node.id),
-      );
-      results.push({ tall: box });
+    for (const height of [small, large]) {
+      await page.setViewportSize({ width: 390, height });
+      for (const section of await page.locator('.home-section').all()) {
+        const box = await section.evaluate((node) => {
+          const rect = node.getBoundingClientRect();
+          const image = node.querySelector('.home-image')!.getBoundingClientRect();
+          const copy = node.querySelector('.home-copy')!;
+          const content = copy.firstElementChild!.getBoundingClientRect();
+          const copyRect = copy.getBoundingClientRect();
+          return {
+            height: rect.height,
+            imageHeight: image.height,
+            copyHeight: copyRect.height,
+            contentTop: content.top - copyRect.top,
+            contentBottom: copyRect.bottom - content.bottom,
+            overflow: getComputedStyle(copy).overflowY,
+          };
+        });
+        near(
+          box.imageHeight,
+          small / 2 + height - small,
+          'long copy does not enlarge/shrink image',
+        );
+        near(box.height, small / 2 + box.copyHeight, 'tall section uses stable layout footprint');
+        assert.ok(box.height > 844, 'section grows');
+        assert.ok(box.contentTop >= -1 && box.contentBottom >= -1, 'copy is contained');
+        assert.equal(box.overflow, 'visible', 'no clipping or nested scrolling');
+        await section.evaluate((node) => {
+          const content = node.querySelector('.home-copy')!.firstElementChild!;
+          content.scrollIntoView({ block: 'end', behavior: 'instant' });
+        });
+        await page.waitForFunction(
+          (id) => {
+            const bottom = document
+              .getElementById(id)!
+              .querySelector('.home-copy')!
+              .firstElementChild!.getBoundingClientRect().bottom;
+            return bottom > 0 && bottom <= innerHeight + 1;
+          },
+          await section.evaluate((node) => node.id),
+        );
+        results.push({ viewportHeight: height, tall: box });
+      }
     }
     assert.equal(
       await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
