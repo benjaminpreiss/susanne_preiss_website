@@ -25,17 +25,19 @@ match `wrangler.jsonc` (or deliberately update both names before building).
 
 Before submitting the form, configure:
 
-| Field             | Value                                                         |
-| ----------------- | ------------------------------------------------------------- |
-| Production branch | `master`                                                      |
-| Root directory    | `/`                                                           |
-| Build command     | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
-| Deploy command    | `pnpm run cloudflare:production`                              |
-| Preview command   | `pnpm run cloudflare:preview`                                 |
+| Field                              | Value                                                         |
+| ---------------------------------- | ------------------------------------------------------------- |
+| Production branch                  | `master`                                                      |
+| Root directory                     | `/`                                                           |
+| Build command                      | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
+| Deploy command (noindex initially) | `pnpm run cloudflare:production:noindex`                      |
+| Preview command                    | `pnpm run cloudflare:preview`                                 |
 
-**Do not accept the default production deploy command.** Our production command is
-an intentional blocker and cannot publish the live site. The initial master build
-may therefore end with "Production deployment is disabled"; that is expected.
+**Both production commands now deploy.** The old blocker has been replaced. Use the
+noindex command for initial production verification; use `pnpm run cloudflare:production`
+only when indexing is approved. If production publication is not approved yet, pause
+production builds instead. Change existing dashboard settings before merging this
+script change: the old command name will now publish with indexing allowed.
 
 Under build variables (not runtime bindings), configure:
 
@@ -79,17 +81,26 @@ Verify the preview's recorded commit, noindex header, canonical metadata, deep l
 permanent redirects/queries/fragments, real missing-path 404, images/PDFs, menu navigation
 and external HLS playback. Before production, also test replacement of removed assets/
 routes and rollback on a disposable preview with explicit owner approval. Do not modify
-built output after validation or use production as a test fixture.
+built output manually or use production as a test fixture. The production scripts only
+select deployment headers, then rerun the artifact audit before publishing.
 
-## 4. Leave production disabled until the domain is ready
+## 4. Publish without indexing, then launch
 
-Do not attach a production custom domain or change DNS yet. Preview URLs need no access
-to your domain's nameservers. Keep `pnpm run cloudflare:production` as the Deploy command.
-Old `CLOUDFLARE_DEPLOY_ENABLED` flags no longer activate anything.
+After preview verification, branch protection and owner approval:
 
-After preview evidence, branch protections, HTTPS/domain setup and explicit activation
-approval, the owner may change the Deploy command to `pnpm exec wrangler deploy` and
-coordinate the DNS cutover. Subsequent master pushes then use native automatic deployment.
+1. Set the Deploy command to `pnpm run cloudflare:production:noindex` and build `master`.
+   This publishes the production Worker, but does not itself attach a live domain.
+2. Coordinate the custom-domain/DNS/TLS cutover separately. Preserve email records and
+   the old host's website DNS settings for rollback. Verify the live site and confirm
+   `X-Robots-Tag: noindex` on its responses. Noindex is not authentication or privacy.
+3. When indexing is approved, change the Deploy command to
+   `pnpm run cloudflare:production` and trigger another master build. Confirm production
+   no longer sends noindex, robots allows crawling, and the sitemap loads. Preview URLs
+   must remain noindex. Then submit the sitemap in Search Console if needed.
+
+Subsequent master pushes use the selected mode automatically. No `NODE_ENV`, indexing
+secret or old `CLOUDFLARE_DEPLOY_ENABLED` flag is needed. The production scripts apply
+headers to the existing build, audit it again and deploy with the pinned Wrangler.
 Pausing/disabling builds and native rollback are documented in
 [the deployment contract](cloudflare-deployment.md). No per-deploy custom approval system
-or custom GitHub deployment framework remains.
+or custom GitHub deployment framework is introduced.
