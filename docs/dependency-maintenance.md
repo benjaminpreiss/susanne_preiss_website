@@ -1,198 +1,199 @@
-# Dependency maintenance (Renovate)
+# Dependency maintenance (Dependabot)
 
-## Policy and activation boundary
+## GitHub-native setup
 
-Use the **hosted Mend Renovate GitHub App**, not a scheduled Actions runner or a
-paid maintenance service. Its official listing confirms free installation/service
-for public and private repositories. No app installation, PR creation, merge, push,
-repository-setting change or production activation was performed for this setup.
+GitHub runs Dependabot from `.github/dependabot.yml`; there is no Mend account,
+Renovate runner, personal access token or custom GitHub App. The owner replaced the
+original Renovate plan with Dependabot. Remove/suspend any previously installed
+Renovate app for this repository and close its pending PRs/queued automerges before
+activating Dependabot. Only one update bot should remain active.
 
-`renovate.json` is ready for onboarding, but its **last package rule disables all
-automerging**. Keep that safety latch until the owner approves the categories below
-and proves required-check enforcement. Removing that rule is a separate reviewed
-change, not an instruction to activate now. If enforcement is unavailable, retain
-it and merge manually. Do not use a broad PAT or a custom update workflow.
+Merging this config into the default branch enables scheduled version updates where
+repository/org policy permits. It does **not** activate automerging: the separate
+metadata-only workflow requires the repository Actions variable
+`DEPENDABOT_AUTOMERGE_ENABLED` to equal `true`. Leave it unset until the owner has
+proved required-check enforcement. No live settings were changed during implementation.
 
-Proposed defaults, awaiting owner confirmation:
+## Update policy and coverage
 
-- Routine creation: **Monday 00:00–05:59 Europe/Berlin**, including DST. This is an
-  eligibility window, not a guarantee the hosted service runs at a particular time.
-- At most two PRs/hour, three open PRs and three branches for routine updates.
-- Compatible framework/integrations, player packages, fonts, Node pins, pnpm pins
-  and a small stable-tooling group stay together. Major and non-major updates are
-  separate; unrelated majors remain separate. Coordinated framework/player majors
-  can share their compatibility group, but always require review.
-- After activation only stable patch/minor updates to `prettier`, `ignore` and
-  `@types/css-tree`, plus lockfile maintenance, are eligible for automerge.
-  Everything else defaults to review, including Actions (even SHA-only updates),
-  Node/pnpm, Astro/Svelte, Video.js, Wrangler, native packages and other tooling.
-  Pre-1.0 changes, prereleases, majors, replacements and rollbacks never qualify.
-- Weekly lockfile maintenance refreshes transitive resolutions without deliberately
-  bumping direct dependency specifications. It can still change sensitive transitive
-  code: inspect the first refresh manually, and remove its eligibility rule if that
-  risk is unacceptable. It is not a security audit or a no-risk operation.
-- `rebaseWhen: conflicted` and `updateNotScheduled: false` avoid rebuilding every
-  queued PR on every master merge. If strict up-to-date branch protection blocks a
-  PR, request a rebase in the Dependency Dashboard/PR, then wait for fresh checks.
-  Do not relax protection to clear the queue. Manual requests and security updates
-  can create work outside the routine window.
+- Check weekly on **Monday at 03:00 Europe/Berlin**, including DST. This is a scheduled
+  check time, not an exact delivery guarantee or a restriction on merge times.
+- npm/pnpm version PR limit: **3**; GitHub Actions version PR limit: **2**. Dependabot
+  has no configured Renovate-style hourly/combined branch cap here. Security PRs are
+  outside the version-update limit and schedule; these numbers are not spending caps.
+- Compatible Astro/Svelte integrations, Video.js packages, fonts and stable tooling
+  are grouped. Framework/player majors have separate compatibility groups; unrelated
+  majors remain individual. Action patch/minor updates are grouped but always manual.
+- Rebasing is **disabled** to avoid rebuilding every queued PR after a master change.
+  If a PR conflicts or strict up-to-date protection blocks it, comment
+  `@dependabot rebase`, then wait for fresh checks. Do not weaken protection to clear
+  the queue. Previously open PRs may continue automatic rebasing for up to 30 days
+  after the setting changes, per Dependabot's documented behavior.
+- npm ecosystem `/` covers root `package.json` and `pnpm-lock.yaml` (pnpm 10 is
+  supported). `versioning-strategy: increase` updates pinned direct versions and their
+  lockfile. Scratch, fixtures, retired/generated output and agent packages are excluded.
+- The Actions ecosystem covers workflow Action references, including immutable SHA
+  pins and version comments. Keep references pinned; inspect version/comment updates.
+- **Coverage difference from Renovate:** do not assume Dependabot keeps `engines.node`,
+  `packageManager`, `actions/setup-node`'s `node-version` or `pnpm/action-setup`'s
+  `version` inputs synchronized. Node/pnpm runtime/tool pins remain an owner-maintained
+  task, including Cloudflare `NODE_VERSION`/`PNPM_VERSION` and documented versions in
+  [the deployment guide](cloudflare-deployment.md). No custom updater was added.
+- Dependabot updates lockfiles with dependency/security PRs; this setup does **not**
+  provide Renovate's periodic full lockfile-maintenance refresh. Standalone/transitive
+  refreshes remain manual and are not automerge-eligible.
 
-## Coverage and toolchain ownership
+## What can automerge
 
-Only the built-in `npm` and `github-actions` managers are enabled. An allowlist
-limits discovery to root `package.json`, `pnpm-workspace.yaml` and workflow YAML;
-retired tooling, `.scratch`, fixtures, generated output, agent packages and historical
-snapshots are not scanned. `pnpm-lock.yaml` is discovered through the npm manager;
-it does not need to be independently included as a manifest. No regex manager is used.
+After owner activation, only the `stable-tooling` **version-update** group is eligible:
+`prettier`, `ignore`, and `@types/css-tree`, all direct development dependencies.
+Every member must have a known, increasing, stable major >=1 patch/minor version
+within the same major. The workflow checks the full metadata array, not substring
+matches, the first package alone, PR labels or titles.
 
-Native extraction was verified for all 31 direct npm dependencies, the Node engine,
-`packageManager: pnpm@10.8.0`, workflow `pnpm/action-setup`'s version, workflow
-`actions/setup-node`'s Node version, four immutable Action references with version
-comments, and the Ubuntu runner. The Node workflow datasource names its package
-`actions/node-versions`, so the Node group matches **depName**, not packageName.
-Renovate preserves SHA pinning and updates the associated version comment.
+Majors, 0.x releases, prereleases, unknown/missing metadata, maintainer-change notices,
+production/indirect dependencies, lockfile-only updates, Node/pnpm, Astro/Svelte,
+Video.js, Wrangler, native packages and **all workflow/Action updates** remain manual.
+Security PRs are not assigned the version-only `stable-tooling` group and remain
+manual too. A security label cannot authorize a risky major upgrade.
 
-Review Node/pnpm updates for support and compatibility rather than tracking every
-major automatically. The current CI pins are Node 24.20.0 and pnpm 10.8.0; the
-package engine is a compatibility floor, not a deployed-runtime pin. The owner must
-also update Cloudflare `NODE_VERSION`/`PNPM_VERSION` build variables and the documented
-pins in `docs/cloudflare-deployment.md`. Renovate cannot edit dashboard variables or
-infer those documentation changes. Do not merge a toolchain update until coordinated.
+The workflow checks the current PR identity/head, same-repository master target, a
+single verified Dependabot-authored commit, and that only existing `package.json`
+and optionally `pnpm-lock.yaml` are modified. Extra commits, forks, changed heads,
+renames and unexpected files fail closed. The pinned metadata action currently
+verifies the first commit; requiring exactly one commit prevents additional human
+commits from inheriting its authorization. Each handled revision first revokes any
+previous auto-merge request, before metadata verification, then reauthorizes only if
+all checks pass. Incomplete group metadata means manual review, not a fallback to
+looser matching.
 
-## Security alerts and execution trust
+It then requests GitHub's **native auto-merge**, bound to the inspected head SHA,
+using `enablePullRequestAutoMerge`. It never calls a direct merge endpoint, bypasses
+protection, approves a PR, or uses `gh pr merge`'s immediate-merge path. Required checks
+and any required human reviews still apply. Squash merging must be enabled. If GitHub
+refuses to queue an already-mergeable PR or an org policy blocks token writes, inspect
+it and merge manually; do not add a direct-merge fallback. This setup does not support
+merge queues, which require additional authentication/configuration.
 
-Keep GitHub dependency graph and Dependabot alerts enabled where available. Disable
-Dependabot **version updates** (no Dependabot configuration exists locally) and check
-for inherited/org update bots. Choose Renovate as the sole automatic remediation PR
-producer; disable Dependabot security-update PRs if they duplicate Renovate, without
-disabling the underlying alerts.
+## Trust boundary and event chain
 
-Renovate's GitHub vulnerability remediation depends on accessible Dependabot alerts,
-a supported ecosystem/lockfile and a known remediation. Confirm those permissions
-and alert availability in the hosted app. OSV scanning is not enabled here. Security
-updates bypass the weekly schedule and routine PR/rate/concurrency limits; therefore
-those limits are not a hard CI spending cap. Vulnerability PRs are ungrouped and
-explicitly **manual merge**, regardless of labels or update size. They must pass the
-same required checks; a major security fix is not automatically safe. Review alerts
-manually if the app cannot consume them; do not assume all transitives are repairable.
+Normal site validation stays on ordinary `pull_request`, with `contents: read`,
+checkout credentials not persisted, no production secrets and a frozen pnpm install.
+Dependabot creates the PR/commits, so those validation events are not generated by
+our workflow's `GITHUB_TOKEN`.
 
-Updating dependencies executes untrusted code. pnpm restricts dependency install
-scripts to the existing workspace allowlist (`esbuild`, `sharp`, `@parcel/watcher`),
-but build/test tools and repository scripts also execute code. Review any change to
-that allowlist, lifecycle scripts, Actions or workflow permissions. Do not enable
-Renovate custom post-upgrade commands or expose registry/production credentials.
+The small automerge workflow uses **`pull_request_target` only for metadata** and
+runs the base-branch workflow definition. Its job receives `contents: write` and
+`pull-requests: write`, using the ephemeral built-in token. It never checks out code,
+installs dependencies, restores caches, downloads artifacts or executes anything
+from the PR. Metadata is passed through environment variables; GitHub CLI calls use
+argument arrays, not shell interpolation. Do not add PR-code execution to this
+privileged workflow. No user-created secret, PAT or external account is needed.
 
-The existing workflow uses ordinary `pull_request`, `contents: read`, ephemeral
-GitHub runners and checkout with `persist-credentials: false`. There is no
-secret-bearing `pull_request_target` checkout. App-authored PR commits generate real
-PR events and run validation; this does not depend on a workflow's `GITHUB_TOKEN`
-creating an event that triggers another workflow.
+Dependency installation/build/testing still executes untrusted code in the separate
+unprivileged validation job. Keep the workspace install-script allowlist narrow
+(`esbuild`, `sharp`, `@parcel/watcher`); review lifecycle scripts, native packages and
+permission changes. Native Cloudflare preview builds also execute branch code—review
+build credentials/app access and keep application secrets out of this static site.
 
-An eligible, gated merge produces a `master` push, which runs ticket 09 validation
-again. **Ticket 10 now uses independent native Cloudflare builds**, not deployment
-of the GitHub-tested artifact. GitHub's master artifact is diagnostic only. Cloudflare
-does not wait for master validation: merge protection is essential, direct/bypass
-pushes must be restricted, and its own build/output audit gates its output. Production
-remains disabled. See [deployment policy](cloudflare-deployment.md). Native preview
-builds also execute branch code: audit their build credentials/app access and keep
-application secrets out of this static project before admitting bot branches.
+Expected flow: Dependabot PR → unprivileged validation → native gated auto-merge →
+master update. Verify the resulting **master push validation** on GitHub before
+relying on activation. Events directly caused by `GITHUB_TOKEN` generally suppress
+follow-on workflows; this workflow deliberately only enables native auto-merge rather
+than directly merging. Local mocks do not establish the hosted event chain. If master
+validation does not run, turn off this automation and use manual merges while resolving
+it—do not assume a green PR proves a master run or introduce credentials silently.
 
-## Proposed owner setup stages
+Ticket 10 uses **independent native Cloudflare builds**, not deployment of the GitHub
+artifact. Cloudflare does not wait for master validation; enforce the PR gate and
+restrict direct/bypass pushes. GitHub's master artifacts are diagnostic only.
+Production remains disabled; this setup does not authorize deployment or DNS changes.
 
-Confirm this stage order before generating/running a human-only setup wizard. No
-secrets are requested or saved. Capture the public repository identity, visibility,
-plan, default branch and approval decisions in an owner verification note.
+## Owner activation checklist
 
-1. **Identity and budget.** Confirm `OWNER/REPO`, `master`, authority to install apps,
-   repository visibility and GitHub plan. Approve the Berlin window and eligible
-   categories. Check existing bots and Cloudflare preview/build trust as above.
-2. **Protection first.** In repository Settings → Branches (branch protection) or
-   Rules → Rulesets, protect `master`: require PRs and successful status checks,
-   restrict bypass/direct pushes and prevent force pushes/deletion. Require ticket
-   09's **Validate static site / validate** (workflow `Validate static site`, job/check
-   context `validate`). Select the observed GitHub Actions check in the UI; do not
-   invent separate build/lint checks. Confirm required check source and test that a
-   failing/missing check blocks merging, including for the app/admin bypass policy.
-   If human reviews are required, retain them; eligible PRs still need that review.
-3. **Plan support.** GitHub Free supports protected branches for public repositories;
-   private protection requires a qualifying plan (Pro for personal repositories,
-   Team/Enterprise for organizations). A green run is not enforcement evidence.
-   If reliable protection is unavailable, keep manual merging and the safety latch.
-4. **Install the app, only on approval.** Open <https://github.com/apps/renovate>,
-   select only this repository, inspect requested permissions, and review its
-   onboarding/Dependency Dashboard and effective configuration. No PAT is needed.
-   Retain useful alerts; verify there is only one PR-producing update bot.
-5. **Prove validation before automerge.** Inspect an app-authored PR: expected
-   unprivileged validation, no secrets, proper groups, pinned Actions and frozen
-   lockfile. Observe failing checks preventing merges and success permitting them.
-   Confirm the observed merge commit triggers master validation and identify the
-   independent Cloudflare build; do not activate production for this exercise.
-6. **Optional automerge approval.** Only after stages 1–5, enable Settings → General
-   → Pull Requests → Allow auto-merge if supported. Approve a PR removing the final
-   safety-latch rule, retaining all review exclusions. The policy uses PR/platform
-   automerge, never direct branch merging or bypass. Observe one eligible merge
-   waiting for required checks. Platform automerge can happen outside Monday's
-   creation window. If any gating is uncertain, do not perform this stage.
+Before turning on automerge, confirm repository identity, default branch (`master`),
+visibility and GitHub plan. Public Free repositories support protected branches;
+private repositories need a qualifying plan (Pro for personal repos, Team/Enterprise
+for organizations). Auto-merge availability and organization policy must also permit
+this setup. If reliable enforcement is unavailable, leave the variable unset and use
+manual merges. Passing CI alone is not proof of enforcement.
 
-Actual UI availability, installation, permissions, alert ingestion, hosted scheduling,
-branch protection and automerge remain owner-verification items, not local test claims.
+1. **One bot and alerts:** remove Renovate access/queued automerges if it was installed.
+   Enable the dependency graph, Dependabot alerts and Dependabot security updates in
+   repository security settings. Keep security updates ungrouped initially; they need
+   separate human review. Confirm the new config is on the default branch and inspect
+   the Dependabot update logs. GitHub's UI names can vary by account.
+2. **Protect master first:** in Settings → Branches or Rules → Rulesets, require PRs
+   and ticket 09's **Validate static site / validate** (workflow `Validate static site`,
+   actual job/check context `validate`). Select the observed GitHub Actions check/source,
+   not this automerge workflow. Restrict direct pushes/bypasses and force pushes/deletion.
+   Prefer requiring branches to be up to date; request explicit rebases when needed.
+   Retain any required human reviews—this workflow never manufactures approval.
+3. **Prove gating:** observe a real Dependabot PR with read-only validation. Verify a
+   failed or missing `validate` check prevents merging, including the relevant app/admin
+   bypass policy. Inspect package/lockfile diffs and test a rebase. Review the first
+   grouped update manually. A `protected` API flag alone cannot prove required checks.
+4. **Enable repository features:** Settings → General → Pull Requests: allow squash
+   merging and auto-merge. Do not enable a merge queue for this workflow. No setting
+   to let Actions approve PRs is required; the workflow never submits reviews.
+5. **Opt in:** only after the above, create the non-secret Actions repository variable
+   `DEPENDABOT_AUTOMERGE_ENABLED=true` under Settings → Secrets and variables → Actions
+   → Variables. No code change or credential is required. A future eligible PR event
+   queues auto-merge; for an already-open PR, request `@dependabot rebase` or rerun an
+   applicable workflow run. Missing permissions/errors stay manual.
+6. **Observe and record:** prove an eligible grouped patch/minor PR waits for checks,
+   merges only when requirements pass, and produces master validation. Confirm majors,
+   mixed/sensitive groups, security fixes and Actions updates are not queued. Inspect
+   the independent Cloudflare build identity without activating production.
 
-## Costs, pausing and recovery
+These are proposed human-only setup stages; confirm them before generating a guided
+setup wizard. Installation/settings, real scheduling, security remediation, native
+merge behavior and resulting event delivery have not been exercised locally.
 
-The bot is free; running CI is not universally unlimited. Official GitHub allowances:
-standard hosted-runner minutes are free on public repositories; private GitHub Free
-includes **2,000 minutes/month and 500 MB artifact storage**, with **10 GB cache storage
-per repository**. Private Pro/Team include 3,000 minutes with 1 GB/2 GB artifact storage.
-Allowances are shared/account-dependent and storage accrues over time. Confirm the
-current billing screen rather than treating this document as a price guarantee.
-The workflow keeps only master artifacts for seven days; delete unnecessary artifacts
-and caches, but deletion does not erase previously accrued usage. Cloudflare has its
-own quotas and builds bot branches independently; see the deployment guide.
+## Cost controls, pausing and recovery
 
-In account/organization Settings → Billing & licensing, inspect Actions usage and
-Budgets and alerts. Set notifications and an available **stop usage** budget; an
-alert-only budget is not a spending cap. Check payment/no-payment behavior and
-Cloudflare spending controls. No paid upgrade is required or authorized here.
+Dependabot is GitHub-native and free for public/private repositories. Normal Dependabot
+updates running on GitHub-hosted Actions infrastructure do not count against Actions
+minutes, but **PR validation and this automerge workflow are ordinary Actions runs**.
+Public standard hosted-runner minutes are free; private GitHub Free includes 2,000
+minutes/month, 500 MB artifact storage and 10 GB cache storage per repository. Pro/Team
+include 3,000 minutes with 1 GB/2 GB artifact storage. Confirm current account allowances
+and billing rather than assuming unlimited private CI. GitHub artifacts expire after
+seven days here; Cloudflare has independent build/storage quotas.
 
-To pause: suspend the app's repository access (Settings → installed GitHub Apps), or
-merge `"enabled": false` into Renovate config. **Also disable already queued GitHub
-automerge PRs**: pausing Renovate does not cancel GitHub's pending merges. Close unwanted
-PRs and cancel queued runs if necessary; pause Cloudflare builds separately. Resume
-only after correcting the failure/budget condition.
+In account/org Billing & licensing, inspect usage, configure alerts and any available
+**stop-usage** budget. Notification-only budgets do not cap spend. Security updates
+and manual rebases can exceed routine PR limits. Deleting artifacts/caches frees
+current storage but does not erase accrued charges. No paid upgrade is authorized.
 
-The owner reviews failed-update logs and release notes, decides whether to rebase,
-fix, defer or close a PR, and verifies the site after sensitive upgrades. Never force
-a merge just to clear the bot queue. A failing PR does not change master or the deployed
-production site (a branch preview may still build). If an accepted update causes a
-regression, pause updates/builds, revert through a validated PR and, when production
-is active, use the owner-approved Cloudflare rollback procedure. Dependencies, locks
-and coordinated runtime settings all need review. This is assisted maintenance, not
-zero-intervention maintenance.
+To pause merging: unset/set `DEPENDABOT_AUTOMERGE_ENABLED=false` **and disable auto-merge
+on already queued PRs**. Changing a variable or disabling the workflow does not revoke
+previous native auto-merge requests. To pause version updates, set each ecosystem's
+`open-pull-requests-limit: 0`; this does not stop security updates. Manage security
+updates separately in settings without discarding alerts. Close unwanted PRs/cancel
+runs as needed and pause Cloudflare builds separately.
 
-## Verification and official references
+The owner still reviews failures, release notes and sensitive upgrades; request fixes
+or defer rather than forcing failed checks through. Failed PR validation does not
+change master or deployed production (a branch preview may exist). For a regression
+after merging, pause automation/builds, revert through a validated PR, and use the
+owner-approved Cloudflare rollback procedure if production is active. Include the
+lockfile and coordinated runtime settings. This is not zero-intervention maintenance.
 
-Re-run the supported validator without adding Renovate as a site dependency:
+## Local evidence and official references
 
-```sh
-NPM_CONFIG_USERCONFIG=/dev/null NPM_CONFIG_CACHE="$PWD/.scratch/ticket17/npm-cache" \
-  npm exec --yes --package=renovate@44.138.0 -- renovate-config-validator --strict renovate.json
-```
+`tests/dependabot.test.ts` executes the actual inline gate with mocked GitHub responses:
+eligible groups, majors/mixed groups, 0.x/prereleases, security/unknown metadata, wrong
+heads/authors/forks, extra commits/files, lockfile-only changes and missing protection.
+These are policy tests, not hosted GitHub integration tests. Config was schema-validated
+and both workflows checked with actionlint. See `.scratch/ticket17/dependabot/VERIFICATION.md`.
 
-Local platform `--dry-run=extract --print-config` and `--dry-run=lookup --print-config`
-were run against isolated copies of the real manifests/workflow. They create no PRs
-and perform no installs/lockfile refresh. Tokenless lookup warns that GitHub-sourced
-releases need a token; SHA extraction is verified, authenticated SHA lookup is not.
-Representative fixture inspection and policy tests are recorded in
-`.scratch/ticket17/VERIFICATION.md`. These do not prove hosted merge behavior or that
-a future lockfile update passes the site suite.
-
-Official sources consulted during implementation:
-
-- [Hosted app: free public/private service](https://github.com/apps/renovate)
-- [Installation and onboarding](https://docs.renovatebot.com/getting-started/installing-onboarding/)
-- [npm manager and lockfiles](https://docs.renovatebot.com/modules/manager/npm/)
-- [Actions manager, pins and runtime inputs](https://docs.renovatebot.com/modules/manager/github-actions/)
-- [Configuration: schedules, rules, rebases, vulnerability alerts](https://docs.renovatebot.com/configuration-options/)
-- [Automerge prerequisites and limitations](https://docs.renovatebot.com/key-concepts/automerge/)
-- [GitHub protection availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
-- [GitHub Actions billing and budgets](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
+- [Dependabot options and supported pnpm versions](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference)
+- [Automating Dependabot with Actions](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions)
+- [Pinned fetch-metadata source and output contract](https://github.com/dependabot/fetch-metadata/tree/v3.1.0)
+- [Workflow events and pull_request_target security](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
+- [Token-generated event restrictions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+- [GitHub GraphQL schema: head-bound auto-merge input](https://github.com/octokit/graphql-schema/blob/master/schema.graphql)
+- [Protected branch availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+- [Dependabot on Actions and billing](https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-on-actions)
+- [Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)

@@ -32,7 +32,7 @@ explicitly. See [quality tooling](docs/quality-tooling.md) for commands, exact f
 coverage (including Astro/Markdoc fallbacks), exclusions and troubleshooting.
 See [static CI and artifact handoff](docs/static-validation.md) for browser smoke
 checks, seven-day tested master artifacts, download verification and hosting limits.
-See [dependency maintenance](docs/dependency-maintenance.md) for hosted Renovate,
+See [dependency maintenance](docs/dependency-maintenance.md) for GitHub-native Dependabot,
 weekly update policy and owner-gated activation (automerge is disabled initially).
 
 ## Editorial content and publication
