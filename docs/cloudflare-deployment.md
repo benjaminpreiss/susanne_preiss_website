@@ -16,13 +16,14 @@ Wrangler **4.147.0** is pinned in package.json and the lockfile (native previews
 
 Use these Cloudflare build settings:
 
-| Setting                              | Value                                                         |
-| ------------------------------------ | ------------------------------------------------------------- |
-| Production branch                    | `master`                                                      |
-| Root directory                       | `/` (directory containing package.json and wrangler.jsonc)    |
-| Build command                        | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
-| Preview command                      | `pnpm run cloudflare:preview`                                 |
-| Deploy command, **until activation** | `pnpm run cloudflare:production`                              |
+| Setting                                          | Value                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| Production branch                                | `master`                                                      |
+| Root directory                                   | `/` (directory containing package.json and wrangler.jsonc)    |
+| Build command                                    | `pnpm install --frozen-lockfile && pnpm run cloudflare:build` |
+| Preview command                                  | `pnpm run cloudflare:preview`                                 |
+| Deploy command, production without indexing      | `pnpm run cloudflare:production:noindex`                      |
+| Deploy command, production with indexing allowed | `pnpm run cloudflare:production`                              |
 
 Build variables: `NODE_VERSION=24.20.0`, `PNPM_VERSION=10.8.0`,
 `SKIP_DEPENDENCY_INSTALL=1`, `HUSKY=0`, `ASTRO_TELEMETRY_DISABLED=1`,
@@ -40,19 +41,38 @@ branches, updates the branch preview URL on pushes, provides immutable deploymen
 URLs and posts PR comments. One Worker supports multiple native previews; there is
 no separate Worker per PR and no custom PR-comment bot. URLs are public by default.
 
-## Production remains disabled
+## Production deployment and indexing
 
-`cloudflare:production` deliberately **exits with an explanatory error without
-invoking Wrangler**. Production-branch builds will therefore show a blocked/failed
-deploy, not a false successful publication. `workers_dev: false` additionally disables
-the ordinary production workers.dev hostname; native previews have their own URLs.
-New previews do not require a first production deployment.
+Both production scripts now **publish a real deployment** using the pinned Wrangler.
+The former `cloudflare:production` blocker has been replaced. Before merging this change,
+select `pnpm run cloudflare:production:noindex` in Cloudflare if the first deployment
+must stay out of search results, or pause builds if production is not approved yet.
+Do not leave the old Deploy command in place expecting it to continue blocking.
 
-Do not use the form's default `wrangler deploy` command yet. After preview verification,
-owner approval, protection checks and a planned custom-domain/TLS/DNS cutover, the owner
-may replace the Deploy command with `pnpm exec wrangler deploy`. That change enables
-native automatic deployment on subsequent master pushes. No code or setup instructions
-here authorize that activation, an account/project creation, DNS changes or a deployment.
+- `pnpm run cloudflare:production:noindex` adds a site-wide `X-Robots-Tag: noindex`
+  rule to the generated `dist/_headers`, audits the final output, then deploys.
+- `pnpm run cloudflare:production` restores `dist/_headers` from `public/_headers`,
+  audits it, then deploys. Only the workers.dev preview noindex rule remains.
+
+Cloudflare's Build command stays unchanged. These deploy commands reuse its output,
+not a second build. Header selection is the only intentional post-build change and
+runs before the final artifact audit. Failures stop deployment via `&&`. For an approved
+local deployment, run `pnpm cloudflare:build` first; never deploy stale local output.
+Switching modes is reversible and does not edit source headers, HTML, robots or canonicals.
+Use the project commands, not bare `wrangler deploy`, so the indexing policy is applied.
+
+`noindex` is not access control and is not an instant removal from search engines.
+Robots remains crawlable so search engines can see the response header. PDF/image assets
+also receive the blanket header. Multiple matching noindex header values on previews
+are harmless. To launch indexing, select the indexed command and deploy again; verify
+live page headers contain no production `noindex`, check `/robots.txt` and `/sitemap.xml`,
+and submit the sitemap through Search Console. Actual indexing is not guaranteed.
+
+`workers_dev: false` still disables the ordinary production workers.dev hostname;
+native previews keep their own URLs and noindex protection. With no custom domain
+attached, publishing does not switch the live website. Domain/DNS/TLS cutover and
+production execution remain owner-controlled; no deployment was performed by adding
+these commands. Keep the old host available until live verification passes.
 
 ## GitHub checks versus Cloudflare builds
 
