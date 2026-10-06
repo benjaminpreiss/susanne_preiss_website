@@ -70,7 +70,9 @@ test('portrait homepage tiles share stable viewport targets and allow text to gr
   assert.match(css, /scroll-snap-align:start;/);
   assert.match(css, /min-height:100svh;margin-bottom:calc\(100lvh-100svh\);/);
   assert.doesNotMatch(css, /body::after/);
-  assert.doesNotMatch(css, /\d+dvh/);
+  assert.match(css, /margin-bottom:-10dvh;transition:margin-bottom0\.3sease;/);
+  assert.match(css, /translate:010dvh;transition:translate0\.3sease;/);
+  assert.doesNotMatch(css, /(?:height|min-height):[^;]*dvh/);
 });
 
 test('homepage presentation selectors depend on options, not editorial section keys', () => {

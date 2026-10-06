@@ -279,6 +279,10 @@ html[data-page-kind='home'] {
     // The beige page background fills this gap outside the section's snap area.
     // Keep it after the last slide too, so that slide can reach the viewport top.
     margin-bottom: calc(100lvh - 100svh);
+    // Reserve the translated panel's overflow without enlarging the normal slide target.
+    box-sizing: border-box;
+    padding-bottom: 10dvh;
+    transition: padding-bottom 0.3s ease;
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
     }
@@ -288,11 +292,16 @@ html[data-page-kind='home'] {
     .home-image {
       flex: 0 0 auto;
       height: 50svh;
+      margin-bottom: -10dvh;
+      transition: margin-bottom 0.3s ease;
     }
     .home-copy {
       flex: 1 0 auto;
       min-height: 50svh;
       padding: 0;
+      // Individual translate composes with GSAP's page-transition transform.
+      translate: 0 10dvh;
+      transition: translate 0.3s ease;
     }
   }
   .home-intro {
@@ -336,7 +345,13 @@ html[data-page-kind='home'] {
   html[data-page-kind='home'] .site-header,
   html[data-page-kind='home'] .site-footer,
   html[data-page-kind='home'] .site-header .menu,
-  .section-controls a::after {
+  .section-controls a::after,
+  .home-section,
+  .home-section.image-right,
+  .home-section .home-image,
+  .home-section .home-copy,
+  .home-section.image-right .home-image,
+  .home-section.image-right .home-copy {
     transition: none;
   }
 }
