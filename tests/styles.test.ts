@@ -68,6 +68,7 @@ test('portrait homepage tiles share stable viewport targets and allow text to gr
   assert.match(css, /\.home-panel\{width:50%;min-width:0;box-sizing:border-box;/);
   assert.match(css, /scroll-snap-type:ymandatory;/);
   assert.match(css, /scroll-snap-align:start;/);
+  assert.match(css, /\.home-tile\.home-copy\{padding:0010lvh;/);
   assert.doesNotMatch(css, /\d+dvh/);
 });
 

@@ -292,6 +292,9 @@ html[data-page-kind='home'] {
       min-height: calc(100lvh - 50svh);
     }
   }
+  .home-tile .home-copy {
+    padding: 0 0 10lvh;
+  }
   .home-intro {
     .home-image {
       order: -1;
