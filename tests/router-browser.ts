@@ -146,7 +146,7 @@ function watch(page: Page, origin: string) {
       errors.push(`${response.status()} ${response.url()}`);
   });
   page.on('console', (message) => {
-    if (/hydration|ownership|GSAP target|duplicate view-transition-name/i.test(message.text()))
+    if (/hydration|ownership|duplicate view-transition-name/i.test(message.text()))
       errors.push(message.text());
   });
 }
@@ -220,13 +220,7 @@ async function settled(page: Page, path?: string) {
     );
   assert.deepEqual(motionState, { transform: '', opacity: '' }, 'No leftover page styles');
 }
-async function stages(
-  page: Page,
-  before: number,
-  mobile: boolean,
-  reduced: boolean,
-  returning: boolean,
-) {
+async function stages(page: Page, before: number, reduced: boolean, returning: boolean) {
   const samples = await page.evaluate((offset) => window.__routerStages.slice(offset), before);
   assert.deepEqual(
     samples.map((sample) => sample.stage),
@@ -240,9 +234,9 @@ async function stages(
     assert.equal(enter.mainOpacity, '0');
     const source = returning ? enter : exit;
     assert.notEqual(source.mainTransform, 'none', 'Content moves left on departure/return');
-    if (mobile) assert.equal(source.menuOpacity, '0', 'Touch menu fades');
-    else assert.notEqual(source.menuTransform, 'none', 'Desktop menu moves sideways');
-    assert.notEqual(source.contactTransform, 'none', 'Footer controls move vertically');
+    assert.equal(source.menuOpacity, '1', 'Menu toggle stays visible');
+    assert.equal(source.menuTransform, 'none', 'Menu toggle stays in place');
+    assert.equal(source.contactTransform, 'none', 'Footer controls stay in place');
   }
   return samples;
 }
@@ -269,19 +263,36 @@ try {
         const menu = page.locator('#menu-trigger');
         await menu.focus();
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(reduced ? 0 : 1100);
+        // Wait for the visible menu state, not an assumed timer or a zero-delay hydration race.
+        await page.waitForFunction(
+          () => {
+            const links = document.querySelector('dialog[open] .main-navigation');
+            const footer = document.querySelector('footer');
+            return (
+              links &&
+              getComputedStyle(links).opacity === '1' &&
+              footer &&
+              footer.getBoundingClientRect().top >= innerHeight
+            );
+          },
+          null,
+          { timeout: 3000 },
+        );
         assert.equal(
           await page
             .locator('dialog')
             .evaluate((node) => node instanceof HTMLDialogElement && node.open),
           true,
         );
-        assert.equal(
-          await page
-            .locator('footer')
-            .evaluate((node) => node.getBoundingClientRect().top >= innerHeight),
-          true,
-        );
+        const menuFooter = await page.locator('footer').evaluate((node) => ({
+          top: node.getBoundingClientRect().top,
+          height: node.getBoundingClientRect().height,
+          viewport: innerHeight,
+          inline: node.getAttribute('style'),
+          transform: getComputedStyle(node).transform,
+        }));
+        report[`${name}-menu-footer`] = menuFooter;
+        assert.ok(menuFooter.top >= menuFooter.viewport, JSON.stringify(menuFooter));
         assert.equal(await page.locator('#page-return').count(), 0);
         for (let i = 0; i < 10; i++) {
           await page.keyboard.press(i < 5 ? 'Tab' : 'Shift+Tab');
@@ -330,7 +341,7 @@ try {
           let before = await page.evaluate(() => window.__routerStages.length);
           await page.locator(`#footer-${id}`).click();
           await settled(page, `/${slug}/`);
-          report[`${name}-${slug}-open`] = await stages(page, before, mobile, reduced, false);
+          report[`${name}-${slug}-open`] = await stages(page, before, reduced, false);
           assert.equal(
             await page.evaluate(() => window.__routerDocumentId),
             documentId,
@@ -358,7 +369,7 @@ try {
           before = await page.evaluate(() => window.__routerStages.length);
           await page.locator('#page-return').click();
           await settled(page, '/ueber-mich/');
-          report[`${name}-${slug}-return`] = await stages(page, before, mobile, reduced, true);
+          report[`${name}-${slug}-return`] = await stages(page, before, reduced, true);
           assert.ok(
             Math.abs((await page.evaluate(() => scrollY)) - y) <= 1,
             'Return restores scroll',

@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte';
-  import { gsap } from 'gsap';
   import type { UIStrings } from '../lib/content/ui';
   import type { navigationModel } from '../lib/content/navigation';
   import { pageInteractions, type SectionState } from '../interactions/page';
   import { restoreHistoryFocus } from '../interactions/navigation';
-  import { homeContentSteps } from '../interactions/page-motion';
+  import { createMenuMotion } from '../interactions/motion';
 
   interface Props {
     strings: UIStrings;
@@ -27,8 +26,7 @@
   let dialog: HTMLDialogElement;
   let opener: HTMLElement | null = null;
   let releaseScroll: (() => void) | undefined;
-  let animation: gsap.Context | undefined;
-  let transition: gsap.core.Timeline | undefined;
+  let menuMotion: ReturnType<typeof createMenuMotion> | undefined;
   let section: SectionState | null = null;
   let closing = false;
   let departing = false;
@@ -50,14 +48,16 @@
     });
     const departure = () => {
       departing = true;
-      transition?.pause();
+      menuMotion?.pause();
     };
     const abortDeparture = () => {
       departing = false;
-      if (active) {
-        if (closing) transition?.reverse();
-        else transition?.play();
-      }
+      // A reduced-motion change may have settled a paused close during departure.
+      // Re-requesting close also handles that endpoint without restarting the animation.
+      if (closing) {
+        closing = false;
+        void close();
+      } else menuMotion?.resume();
     };
     const exitComplete = () => {
       departing = false;
@@ -70,22 +70,12 @@
       section = state.section;
       updateColors();
     });
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const stopMotion = () => {
-      if (!media.matches) return;
-      if (closing) finishClose();
-      else {
-        animation?.revert();
-        transition = undefined;
-      }
-    };
-    media.addEventListener('change', stopMotion);
     return () => {
-      animation?.revert();
+      menuMotion?.destroy();
+      menuMotion = undefined;
       if (dialog?.open) dialog.close();
       releaseScroll?.();
       unsubscribe();
-      media.removeEventListener('change', stopMotion);
       document.removeEventListener('site:page-departure', departure);
       document.removeEventListener('site:page-cancel', abortDeparture);
       document.removeEventListener('site:page-exit-complete', exitComplete);
@@ -97,99 +87,24 @@
     releaseScroll = pageInteractions(document).lockScroll();
     active = true;
     await tick();
-    if (!active) return;
+    if (!active || departing) return;
     dialog.showModal();
     dialog.querySelector<HTMLButtonElement>('[data-dismiss]')?.focus({ preventScroll: true });
-    animation = gsap.context(() => {
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const timeline = gsap.timeline({ onReverseComplete: finishClose });
-      transition = timeline;
-      // Finish the outgoing content/controls before revealing the menu surface.
-      // Reversing the same timeline also keeps closing sequential and interruptible.
-      timeline.from(
-        dialog.querySelector('.main-navigation'),
-        { opacity: 0, duration: reduce ? 0 : 0.5 },
-        reduce ? 0 : isHome ? 0.7 : 0.5,
-      );
-      if (isHome) {
-        for (const step of homeContentSteps(window.matchMedia('(max-aspect-ratio: 1/1)').matches)) {
-          timeline.to(
-            document.querySelectorAll(step.selector),
-            { ...step.pose, duration: reduce ? 0 : step.duration, ease: 'power1.inOut' },
-            0,
-          );
-        }
-        timeline.to(
-          document.querySelectorAll('.section-controls'),
-          { xPercent: 300, color: '#333', duration: reduce ? 0 : 0.5 },
-          0,
-        );
-        timeline.to(
-          document.querySelectorAll('.site-footer'),
-          { color: '#000', duration: reduce ? 0 : 0.4 },
-          0,
-        );
-        timeline.fromTo(
-          dialog.querySelector('.dismiss-menu'),
-          { color: lightHeader ? '#efeae3' : '#2b2c36' },
-          { color: '#2b2c36', duration: reduce ? 0 : 0.4 },
-          0,
-        );
-      } else {
-        timeline.to(
-          document.querySelectorAll('main.content'),
-          { xPercent: -100, opacity: 0, duration: reduce ? 0 : 0.25, ease: 'power1.inOut' },
-          0,
-        );
-      }
-      timeline.to(
-        document.querySelectorAll('.site-footer'),
-        { yPercent: 300, duration: reduce ? 0 : 0.5, ease: 'power1.inOut' },
-        0,
-      );
-      timeline.to(
-        document.querySelectorAll('.header-background'),
-        { xPercent: -100, duration: reduce ? 0 : 0.25 },
-        0,
-      );
-      const homes = document.querySelectorAll('.site-header .home');
-      if (homes.length) timeline.to(homes, { xPercent: -300, duration: reduce ? 0 : 0.25 }, 0);
-      timeline.from(
-        dialog.querySelectorAll('.dismiss-menu span:nth-child(1)'),
-        { rotation: 0, top: 0, duration: reduce ? 0 : 0.4 },
-        0,
-      );
-      timeline.from(
-        dialog.querySelectorAll('.dismiss-menu span:nth-child(2)'),
-        { opacity: 1, duration: reduce ? 0 : 0.2 },
-        0,
-      );
-      timeline.from(
-        dialog.querySelectorAll('.dismiss-menu span:nth-child(3)'),
-        { rotation: 0, top: '90%', duration: reduce ? 0 : 0.4 },
-        0,
-      );
-    });
+    menuMotion = createMenuMotion(document, dialog, { sectionKey: section?.key, lightHeader });
+    void menuMotion.open();
   }
-  function close() {
+  async function close() {
     if (!active || closing || departing) return;
     closing = true;
-    if (
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      !transition ||
-      transition.time() === 0
-    ) {
-      finishClose();
-      return;
-    }
-    // One reversible timeline preserves original styles even when interrupted.
-    transition.reverse();
+    const motion = menuMotion;
+    await motion?.close();
+    // A route departure or unmount can supersede this close while its timeline is running.
+    if (menuMotion === motion && active && !departing) finishClose();
   }
   function finishClose(restoreFocus = true) {
     if (!active) return;
-    animation?.revert();
-    animation = undefined;
-    transition = undefined;
+    menuMotion?.destroy();
+    menuMotion = undefined;
     active = false;
     closing = false;
     dialog?.close();

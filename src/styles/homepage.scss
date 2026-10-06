@@ -1,7 +1,7 @@
 @use 'responsive';
 
 html[data-page-kind='home'] {
-  // Always settle on a section; native snapping still permits scrolling inside tall sections.
+  // Settle on section tops; portrait slide content is authored to fit its fixed boxes.
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
   overflow-x: clip;
@@ -27,6 +27,7 @@ html[data-page-kind='home'] {
   .site-header .menu {
     transition: color 0.4s;
   }
+  // Do not run a second CSS colour transition behind the shared GSAP timeline.
   &[data-route-phase],
   &:has(dialog[open]) {
     .site-header,
@@ -159,6 +160,15 @@ html[data-page-kind='home'] {
   display: block;
   max-width: 100%;
   touch-action: manipulation;
+  transition: transform 0.2s cubic-bezier(0.455, 0.03, 0.515, 0.955);
+  &:focus-visible {
+    transform: scale(1.1);
+  }
+}
+@media (hover: hover) {
+  .home-tile-link:hover {
+    transform: scale(1.1);
+  }
 }
 .home-intro {
   .home-copy {
@@ -174,7 +184,6 @@ html[data-page-kind='home'] {
     color: #67994f;
     @include responsive.values(
       (
-        margin-top: 60px,
         margin-left: 120px,
         margin-right: 120px,
       )
@@ -227,6 +236,7 @@ html[data-page-kind='home'] {
   right: 17px;
   top: 50%;
   translate: 0 -50%;
+  transform: translateX(var(--controls-motion-x, 0px));
   z-index: 2;
   color: #333;
   &[data-tone='light'] {
@@ -274,30 +284,67 @@ html[data-page-kind='home'] {
   .home-section,
   .home-section.image-right {
     flex-direction: column;
-    // Follow the visible viewport as mobile browser chrome expands/retracts.
-    // Keep a minimum, rather than a fixed height, so long/zoomed text can grow.
-    min-height: 100dvh;
+    // Fixed snap boxes: toolbar changes and content must not resize the section.
+    height: 100svh;
+    // Fixed, non-snapping beige space also reserves room for the text's visual offset.
+    margin-bottom: calc(100lvh - 100svh);
+    box-sizing: border-box;
     img {
       object-position: var(--home-mobile-image-position, var(--home-image-position, center top));
     }
     .home-panel {
       width: 100%;
+      // Shared menu/route offset, independent of the viewport-relative layout translation.
+      transform: translateY(var(--panel-motion-y, 0px));
     }
     .home-image {
-      min-height: 50dvh;
+      flex: 0 0 auto;
+      // The slot never resizes. Only its out-of-flow image frame follows the toolbar.
+      height: 50svh;
+      overflow: visible;
+      contain: layout;
+      > picture,
+      > img {
+        // Override ResponsiveImage's display: contents so picture is a real sizing frame.
+        // Direct img covers SVG/unoptimized sources, which have no picture wrapper.
+        display: block;
+        position: absolute;
+        inset: 0 0 auto;
+        width: 100%;
+        height: calc(50svh + 100dvh - 100svh);
+        overflow: hidden;
+        transition: height 0.3s ease;
+      }
     }
     .home-copy {
-      min-height: 50dvh;
+      flex: 0 0 auto;
+      height: 50svh;
+      min-height: 0;
+      padding: 0;
+      // Follow the enlarged image visually, using the already-reserved beige gap.
+      // Match the image frame's height transition so their visible edges stay joined.
+      translate: 0 calc(100dvh - 100svh);
+      transition: translate 0.3s ease;
     }
   }
   .home-intro {
     .home-image {
       order: -1;
-      flex: 1 0 50dvh;
     }
     .home-copy {
-      flex: 1 0 auto;
-      min-height: auto;
+      overflow: visible;
+    }
+    .home-text {
+      max-width: 100%;
+    }
+    h1,
+    p {
+      @include responsive.values(
+        (
+          margin-left: 40px,
+          margin-right: 40px,
+        )
+      );
     }
     .scroll-hint {
       display: none;
@@ -315,13 +362,30 @@ html[data-page-kind='home'] {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .home-tile-link {
+    transition: none;
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+  }
   html[data-page-kind='home'] {
     scroll-behavior: auto;
   }
   html[data-page-kind='home'] .site-header,
   html[data-page-kind='home'] .site-footer,
   html[data-page-kind='home'] .site-header .menu,
-  .section-controls a::after {
+  .section-controls a::after,
+  .home-section,
+  .home-section.image-right,
+  .home-section .home-image,
+  .home-section .home-image > picture,
+  .home-section .home-image > img,
+  .home-section .home-copy,
+  .home-section.image-right .home-image,
+  .home-section.image-right .home-image > picture,
+  .home-section.image-right .home-image > img,
+  .home-section.image-right .home-copy {
     transition: none;
   }
 }

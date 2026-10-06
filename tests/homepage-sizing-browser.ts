@@ -1,0 +1,386 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { compile } from 'sass';
+import { chromium } from 'playwright';
+
+// Controlled copy and markup: geometry must not depend on production section names/counts.
+// Headless viewport units do NOT emulate retractable mobile browser chrome.
+const output = process.argv[2];
+if (!output)
+  throw new Error('Usage: tsx tests/homepage-sizing-browser.ts <new evidence directory>');
+await mkdir(output, { recursive: false });
+const css = compile('src/styles/homepage.scss').css;
+const browser = await chromium.connectOverCDP(process.env.TEST_CDP ?? 'http://127.0.0.1:9222');
+const results: unknown[] = [];
+const near = (actual: number, expected: number, label: string) =>
+  assert.ok(Math.abs(actual - expected) < 1, `${label}: ${actual}, expected ${expected}`);
+try {
+  const context = await browser.newContext({ reducedMotion: 'reduce' });
+  try {
+    const page = await context.newPage();
+    page.setDefaultTimeout(10_000);
+    await page.setContent(`<!doctype html><html data-page-kind="home"><head>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>body { margin: 0; } ${css}
+        .probe { position: absolute; visibility: hidden; width: 0; }
+        #large { height: 100lvh; } #small { height: 100svh; }
+        picture.responsive-image { display: contents; }
+      </style></head><body>
+      <div class="probe" id="large"></div><div class="probe" id="small"></div>
+      <main class="content">${['home-intro', 'home-tile image-left', 'home-tile image-right']
+        .map((kind, index) => {
+          const src = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="steelblue"/></svg>')}`;
+          const img = `<img src="${src}" width="800" height="600" alt="">`;
+          const image = `<div class="home-panel home-image">${index === 2 ? img : `<picture class="responsive-image">${img}</picture>`}</div>`;
+          const copy = `<div class="home-panel home-copy"><${index ? 'a class="home-tile-link" href="#fixture-0"' : 'div class="home-text"'}><h${index ? '2' : '1'}>Sample</h${index ? '2' : '1'}><p>Brief text.</p></${index ? 'a' : 'div'}></div>`;
+          return `<section id="fixture-${index}" class="home-section ${kind}">${index ? image + copy : copy + image}</section>`;
+        })
+        .join('')}</main></body></html>`);
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 390, height: 664 },
+      { width: 844, height: 390 },
+      { width: 1440, height: 900 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const geometry = await page.locator('.home-section').evaluateAll((sections) => {
+        const large = document.getElementById('large')!.getBoundingClientRect().height;
+        const small = document.getElementById('small')!.getBoundingClientRect().height;
+        return sections.map((section) => {
+          const rect = section.getBoundingClientRect();
+          const image = section.querySelector('.home-image')!.getBoundingClientRect();
+          const copy = section.querySelector('.home-copy')!.getBoundingClientRect();
+          return {
+            large,
+            small,
+            width: rect.width,
+            height: rect.height,
+            imageHeight: image.height,
+            copyHeight: copy.height,
+            imageWidth: image.width,
+            copyWidth: copy.width,
+            imageTop: image.top - rect.top,
+            copyTop: copy.top - rect.top,
+            imageMargin: parseFloat(
+              getComputedStyle(section.querySelector('.home-image')!).marginBottom,
+            ),
+            translation: getComputedStyle(section.querySelector('.home-copy')!).translate,
+            snap: getComputedStyle(section).scrollSnapAlign,
+            tile: section.classList.contains('home-tile'),
+            textTop:
+              section.querySelector('.home-copy')!.firstElementChild!.getBoundingClientRect().top -
+              copy.top,
+            textHeight: section
+              .querySelector('.home-copy')!
+              .firstElementChild!.getBoundingClientRect().height,
+            paddingBottom: parseFloat(
+              getComputedStyle(section.querySelector('.home-copy')!).paddingBottom,
+            ),
+            alignment: getComputedStyle(section.querySelector('.home-copy')!).alignItems,
+          };
+        });
+      });
+      for (const box of geometry) {
+        assert.equal(box.snap, 'start');
+        if (viewport.width <= viewport.height) {
+          near(box.height, box.small, 'section target');
+          near(box.imageHeight, box.small / 2, 'image target');
+          near(box.copyHeight, box.small / 2, 'copy target');
+          near(box.imageMargin, 0, 'no negative image margin');
+          assert.ok(
+            ['0px', '0px 0px'].includes(box.translation),
+            'no offset when dynamic and small viewports coincide',
+          );
+          near(box.imageTop, 0, 'image first, including intro');
+          near(box.copyTop, box.imageHeight, 'panels abut');
+          near(box.imageWidth, box.width, 'portrait image width');
+          near(box.copyWidth, box.width, 'portrait copy width');
+          if (box.tile) {
+            assert.equal(box.alignment, 'center');
+            near(box.paddingBottom, 0, 'portrait tile has no extra bottom padding');
+            near(
+              box.textTop,
+              (box.copyHeight - box.paddingBottom - box.textHeight) / 2,
+              'portrait tile text is centered in the remaining area',
+            );
+          }
+        } else {
+          near(box.imageMargin, 0, 'desktop has no negative margin');
+          assert.equal(box.translation, 'none', 'desktop has no copy offset');
+          assert.equal(box.alignment, 'center', 'desktop copy remains vertically centered');
+          near(box.height, box.small, 'unchanged desktop target');
+          near(box.imageHeight, box.height, 'desktop image height');
+          near(box.copyHeight, box.height, 'desktop copy height');
+          near(box.imageWidth, box.width / 2, 'desktop image width');
+          near(box.copyWidth, box.width / 2, 'desktop copy width');
+        }
+      }
+      const margins = await page.locator('.home-intro h1, .home-intro p').evaluateAll((nodes) =>
+        nodes.map((node) => ({
+          left: parseFloat(getComputedStyle(node).marginLeft),
+          right: parseFloat(getComputedStyle(node).marginRight),
+        })),
+      );
+      const expectedMargin =
+        viewport.width <= viewport.height
+          ? 22 + Math.min(viewport.width, viewport.height) * 0.015
+          : 30 + Math.min(viewport.width, viewport.height) * 0.075;
+      for (const margin of margins) {
+        near(margin.left, expectedMargin, 'intro left margin');
+        near(margin.right, expectedMargin, 'intro right margin');
+      }
+      results.push({ viewport, geometry, margins });
+    }
+    // Reduced motion must disable image growth, flow compensation and text translation.
+    assert.ok(
+      await page
+        .locator('.home-section, .home-panel, .home-image > picture, .home-image > img')
+        .evaluateAll((panels) =>
+          panels.every((panel) => getComputedStyle(panel).transitionDuration === '0s'),
+        ),
+      'reduced motion disables offset transitions',
+    );
+    // Synthetic unequal small/large viewports exercise the gap geometry, not real browser chrome.
+    // Real headless viewport units coincide, which would otherwise conceal final-slide clamping.
+    const small = 664;
+    const large = 844;
+    await page.addStyleTag({
+      content: css.replace(
+        /([\d.]+)(s|l)vh/g,
+        (_, value: string, unit: string) =>
+          `${(Number(value) * (unit === 's' ? small : large)) / 100}px`,
+      ),
+    });
+    for (const height of [large, small, large]) {
+      await page.setViewportSize({ width: 390, height });
+      const gaps = await page.locator('.home-section').evaluateAll((nodes) =>
+        nodes.map((node, index) => ({
+          margin: parseFloat(getComputedStyle(node).marginBottom),
+          distance: nodes[index + 1]
+            ? nodes[index + 1]!.getBoundingClientRect().top - node.getBoundingClientRect().bottom
+            : null,
+        })),
+      );
+      for (const gap of gaps) {
+        near(gap.margin, large - small, 'fixed beige gap, including final slide');
+        if (gap.distance !== null)
+          near(gap.distance, large - small, 'fixed space between section boxes');
+      }
+      assert.equal(
+        await page.evaluate(() => getComputedStyle(document.body, '::after').content),
+        'none',
+        'no fixed overlay covers content',
+      );
+      const sections = await page.locator('.home-section').all();
+      // Visit in both directions, including the final slide at the document boundary.
+      for (const section of [...sections, ...sections.toReversed()]) {
+        near(
+          (await section.boundingBox())!.height,
+          small,
+          'section height ignores toolbar changes',
+        );
+        near(
+          (await section.locator('.home-image').boundingBox())!.height,
+          small / 2,
+          'image slot stays half the small viewport',
+        );
+        near(
+          (await section.locator('.home-copy').boundingBox())!.height,
+          small / 2,
+          'copy target remains half the small viewport',
+        );
+        const visible = await section.evaluate((node) => {
+          const frame = node.querySelector('.home-image > picture, .home-image > img')!;
+          const image = node.querySelector('.home-image img')!;
+          const rect = frame.getBoundingClientRect();
+          return {
+            imageHeight: rect.height,
+            renderedImageHeight: image.getBoundingClientRect().height,
+            fit: getComputedStyle(image).objectFit,
+            position: getComputedStyle(frame).position,
+            imageBottom: rect.bottom,
+            copyTop: node.querySelector('.home-copy')!.getBoundingClientRect().top,
+          };
+        });
+        near(
+          visible.imageHeight,
+          small / 2 + height - small,
+          'visible image absorbs toolbar space',
+        );
+        near(
+          visible.renderedImageHeight,
+          visible.imageHeight,
+          'the actual image resizes with its frame',
+        );
+        assert.equal(visible.fit, 'cover');
+        assert.equal(visible.position, 'absolute', 'resizing frame stays out of normal flow');
+        near(visible.imageBottom, visible.copyTop, 'text follows the resized image edge');
+        await section.evaluate((node) =>
+          node.scrollIntoView({ block: 'start', behavior: 'instant' }),
+        );
+        await page.waitForFunction(
+          (id) => Math.abs(document.getElementById(id)!.getBoundingClientRect().top) < 1,
+          await section.evaluate((node) => node.id),
+        );
+      }
+      // Native wheel scrolling must settle at the slide top in both directions, not the gap.
+      await page.mouse.move(100, 200);
+      for (const [delta, index] of [
+        [700, 1],
+        [-700, 0],
+      ] as const) {
+        await page.mouse.wheel(0, delta);
+        await page.waitForFunction(
+          (index) =>
+            Math.abs(
+              document.querySelectorAll('.home-section')[index]!.getBoundingClientRect().top,
+            ) < 1,
+          index,
+        );
+      }
+      results.push({ syntheticViewport: { small, large, visible: height }, gaps });
+    }
+    // Keep small/large units fixed and change only dvh: model chrome retraction/expansion.
+    // Inspect visible geometry at the halfway point, not merely computed offsets.
+    await page
+      .locator('#fixture-1')
+      .evaluate((node) => node.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await page.waitForFunction(
+      () => Math.abs(document.getElementById('fixture-1')!.getBoundingClientRect().top) < 1,
+    );
+    // Allow the preceding wheel gesture and native snap-target bookkeeping to settle.
+    await page.waitForTimeout(400);
+    const anchoredScroll = await page.evaluate(() => scrollY);
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    const afterMedia = await page.evaluate(() => scrollY);
+    for (const height of [small, large]) {
+      await page.setViewportSize({ width: 390, height });
+      const afterResize = await page.evaluate(() => scrollY);
+      const animation = await page.locator('.home-section').evaluateAll((sections) => {
+        const transitions = sections.flatMap((section) => [
+          ...section.getAnimations(),
+          ...section.querySelector('.home-image')!.getAnimations(),
+          ...section.querySelector('.home-image > picture, .home-image > img')!.getAnimations(),
+          ...section.querySelector('.home-copy')!.getAnimations(),
+        ]);
+        for (const transition of transitions) {
+          transition.pause();
+          transition.currentTime = 150;
+        }
+        const samples = sections.map((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const image = section.querySelector('.home-image')!.getBoundingClientRect();
+          const frame = section
+            .querySelector('.home-image > picture, .home-image > img')!
+            .getBoundingClientRect();
+          const copy = section.querySelector('.home-copy')!.getBoundingClientRect();
+          return {
+            imageHeight: image.height,
+            frameHeight: frame.height,
+            renderedImageHeight: section.querySelector('.home-image img')!.getBoundingClientRect()
+              .height,
+            sectionHeight: rect.height,
+            imageMargin: parseFloat(
+              getComputedStyle(section.querySelector('.home-image')!).marginBottom,
+            ),
+            copyTop: copy.top - rect.top,
+            gap: parseFloat(getComputedStyle(section).marginBottom),
+            nextStart: sections[index + 1]
+              ? sections[index + 1]!.getBoundingClientRect().top - rect.top
+              : null,
+          };
+        });
+        const timings = transitions.map((transition) => transition.effect!.getTiming());
+        const properties = transitions.map((transition) =>
+          transition instanceof CSSTransition ? transition.transitionProperty : 'other',
+        );
+        for (const transition of transitions) transition.finish();
+        return { timings, properties, samples, scroll: scrollY };
+      });
+      // Neither toolbar resizing nor the image animation may change the current snap position.
+      results.push({
+        viewportScroll: {
+          anchoredScroll,
+          afterMedia,
+          afterResize,
+          duringAnimation: animation.scroll,
+          height,
+        },
+      });
+      near(
+        animation.scroll,
+        anchoredScroll,
+        'toolbar resizing and frame interpolation keep the current snap position',
+      );
+      assert.equal(
+        animation.timings.length,
+        6,
+        'only absolute frame height and text translation animate',
+      );
+      assert.ok(
+        animation.properties.every((property) => ['height', 'translate'].includes(property)),
+        'toolbar animation uses real frame resizing and text translation',
+      );
+      for (const timing of animation.timings) {
+        assert.equal(timing.duration, 300);
+        assert.equal(timing.easing, 'ease');
+      }
+      for (const sample of animation.samples) {
+        assert.ok(
+          sample.frameHeight > small / 2 && sample.frameHeight < small / 2 + large - small,
+          'image visibly interpolates rather than jumping',
+        );
+        near(sample.imageHeight, small / 2, 'image slot never resizes during animation');
+        near(
+          sample.renderedImageHeight,
+          sample.frameHeight,
+          'image box genuinely resizes, not clipping',
+        );
+        near(sample.copyTop, sample.frameHeight, 'text follows the resized image edge');
+        near(sample.sectionHeight, small, 'section stays fixed during animation');
+        near(sample.gap, large - small, 'beige gap stays fixed during animation');
+        near(
+          sample.imageHeight + sample.imageMargin,
+          small / 2,
+          'image flow footprint stays fixed',
+        );
+        if (sample.nextStart !== null)
+          near(sample.nextStart, large, 'next slide start stays fixed');
+      }
+      results.push({ animatedViewportHeight: height, animation });
+    }
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    // Oversized copy is unsupported: it must not silently enlarge the snap boxes.
+    await page.locator('.home-copy p').evaluateAll((paragraphs) => {
+      for (const paragraph of paragraphs) paragraph.textContent = 'Additional text. '.repeat(80);
+    });
+    const fixedBoxes = await page.locator('.home-section').evaluateAll((sections) =>
+      sections.map((section) => ({
+        section: section.getBoundingClientRect().height,
+        copy: section.querySelector('.home-copy')!.getBoundingClientRect().height,
+        snapMargin: getComputedStyle(section).scrollMarginBottom,
+      })),
+    );
+    for (const box of fixedBoxes) {
+      near(box.section, small, 'content cannot enlarge a portrait section');
+      near(box.copy, small / 2, 'copy box stays fixed');
+      assert.equal(box.snapMargin, '0px');
+    }
+    results.push({ fixedBoxes });
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      true,
+      'portrait layout has no horizontal overflow',
+    );
+  } finally {
+    await context.close();
+  }
+} finally {
+  await writeFile(
+    join(output, 'report.json'),
+    JSON.stringify({ browser: browser.version(), results }, null, 2),
+  );
+  await browser.close();
+}

@@ -604,7 +604,7 @@ a {
   pointer-events: none;
   isolation: isolate;
 }
-// The dialog owns the toggle while open, including its GSAP exit transition.
+// The dialog owns the toggle while open, including its closing animation.
 body:has(.shared-dialog[open]) #menu-trigger {
   visibility: hidden;
 }
@@ -916,9 +916,11 @@ body[data-utility] .site-footer {
   white-space: nowrap;
 }
 
-// GSAP owns live-element motion; ClientRouter owns loading/history/document swapping.
+// The shared motion module owns live-element timelines; ClientRouter owns loading/history/swapping.
 // No cross-document opt-in, including when JavaScript is disabled.
-html[data-route-phase='swapping'] body {
+// Hide only outgoing content during cleanup; header/footer controls remain visible.
+html[data-route-phase='swapping'] main,
+html[data-route-phase='swapping'] .shared-dialog .main-navigation {
   visibility: hidden;
 }
 main:focus {

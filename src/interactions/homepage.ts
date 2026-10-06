@@ -1,8 +1,20 @@
-import { gsap } from 'gsap';
+/**
+ * Enhance one rendered homepage body with active-section state and keyboard navigation.
+ * CSS owns snapping/layout; motion.ts owns menu and route timelines. Wheel/touch remain
+ * native. This module reads geometry and publishes state, but does not animate panels.
+ * @module
+ */
 import { pageInteractions } from './page';
 import { observeHomepageImages } from './homepage-images';
 
-/** Wheel/touch stay native. Keyboard section navigation, active controls and link scale are enhanced. */
+/**
+ * Mount controls/listeners for the current body, deriving links from authored sections.
+ * Non-homepage documents are a no-op. The document survives ClientRouter swaps, so
+ * callers must unmount this body before mounting its replacement.
+ *
+ * @param document Document whose current body should be enhanced.
+ * @returns Cleanup for listeners, image observation, pending scroll work and published state.
+ */
 export function mountHomepage(document: Document) {
   const view = document.defaultView;
   const sections = [...document.querySelectorAll<HTMLElement>('.home-section[data-home-section]')];
@@ -12,19 +24,24 @@ export function mountHomepage(document: Document) {
   const listeners = new AbortController();
   const signal = listeners.signal;
   observeHomepageImages(document, signal);
+  // This preference affects imperative keyboard scrolling only; visual motion is CSS-owned.
   const reduced = view.matchMedia('(prefers-reduced-motion: reduce)');
   const portrait = view.matchMedia('(max-aspect-ratio: 1/1)');
   let locked = false;
   let departing = false;
   let frame = 0;
   let current = '';
+  // Separate the latest requested section from the scroll currently in progress:
+  // rapid keys must queue discrete destinations, not sample an intermediate viewport.
   let keyboardDestination: number | null = null;
   let keyboardInFlight: number | null = null;
   let keyboardTimer: number | undefined;
+  /** Yield completely to pointer input, a dialog lock or an outgoing route. */
   function cancelKeyboard() {
     view!.clearTimeout(keyboardTimer);
     keyboardDestination = keyboardInFlight = null;
   }
+  /** Settle only an explicitly requested keyboard destination, then consume its queued successor. */
   function finishKeyboard() {
     if (keyboardInFlight === null) return;
     view!.clearTimeout(keyboardTimer);
@@ -67,6 +84,7 @@ export function mountHomepage(document: Document) {
     controls.append(link);
     return link;
   });
+  /** Find the section containing the viewport midpoint; use the first before layout settles. */
   function visibleSection() {
     const midpoint = view!.innerHeight / 2;
     return (
@@ -76,6 +94,7 @@ export function mountHomepage(document: Document) {
       }) ?? sections[0]!
     );
   }
+  /** Publish authored tones/visibility without reading temporary menu or route-animation poses. */
   function update() {
     frame = 0;
     if (locked || departing || (current && document.documentElement.dataset.routePhase)) return;
@@ -106,6 +125,7 @@ export function mountHomepage(document: Document) {
       });
     }
   }
+  /** Coalesce scroll/resize geometry reads into one frame; this is not an animation render loop. */
   function schedule() {
     if (!frame) frame = view!.requestAnimationFrame(update);
   }
@@ -171,12 +191,6 @@ export function mountHomepage(document: Document) {
         return;
       }
       const section = visibleSection();
-      const rect = section.getBoundingClientRect();
-      if (
-        rect.height > view.innerHeight + 1 &&
-        (direction > 0 ? rect.bottom > view.innerHeight + 1 : rect.top < -1)
-      )
-        return;
       const next = sections.indexOf(section) + direction;
       if (!sections[next]) return;
       event.preventDefault();
@@ -208,28 +222,13 @@ export function mountHomepage(document: Document) {
     },
     { signal },
   );
-  const context = gsap.context(() => {});
-  for (const link of document.querySelectorAll<HTMLElement>('.home-tile-link')) {
-    const animate = () =>
-      context.add(() => {
-        gsap.to(link, {
-          scale: !reduced.matches && link.matches(':hover, :focus-visible') ? 1.1 : 1,
-          duration: reduced.matches ? 0 : 0.2,
-          ease: 'power1.inOut',
-          overwrite: true,
-        });
-      });
-    for (const name of ['pointerenter', 'pointerleave', 'focus', 'blur'])
-      link.addEventListener(name, animate, { signal });
-    reduced.addEventListener('change', animate, { signal });
-  }
   update();
   return () => {
+    // Abort owns DOM/observer listeners; timers and the queued frame need explicit cancellation.
     listeners.abort();
     cancelKeyboard();
     unsubscribe();
     view.cancelAnimationFrame(frame);
-    context.revert();
     controls.replaceChildren();
     delete document.documentElement.dataset.homeSection;
     delete document.documentElement.dataset.homeTone;

@@ -1,7 +1,7 @@
 # Static website
 
 Astro prerenders each published Markdoc entry; Svelte islands own interactive menus
-and media. GSAP coordinates page motion with Astro ClientRouter. Ordinary links and
+and media. Shared GSAP timelines provide coordinated motion alongside Astro ClientRouter. Ordinary links and
 per-route HTML work without JavaScript. No server adapter, request-time runtime,
 automatic language negotiation or SPA catch-all is required.
 
@@ -32,6 +32,8 @@ explicitly. See [quality tooling](docs/quality-tooling.md) for commands, exact f
 coverage (including Astro/Markdoc fallbacks), exclusions and troubleshooting.
 See [static CI and artifact handoff](docs/static-validation.md) for browser smoke
 checks, seven-day tested master artifacts, download verification and hosting limits.
+See [dependency maintenance](docs/dependency-maintenance.md) for GitHub-native Dependabot,
+weekly update policy and owner-gated activation (automerge is disabled initially).
 
 ## Editorial content and publication
 
@@ -91,10 +93,26 @@ fixture builds. Production activation is separately approved after tickets 08–
 
 ## Interactions and media
 
-The accepted ClientRouter lifecycle sequences GSAP exit → swap → entrance and owns
-history/focus/cleanup. Native scrolling replaces fullpage.js. The menu uses a native
-modal dialog with keyboard/focus management; contact/legal destinations are ordinary
-pages, not overlays. Reduced-motion and no-JavaScript paths are covered by browser tests.
+The accepted ClientRouter lifecycle sequences exit → swap → entrance and owns
+history/focus/cleanup. All GSAP choreography lives in `src/interactions/motion.ts`:
+`createMenuMotion` opens/closes one reversible timeline; `createPageMotion` runs one
+exit or entrance stage. Both share the active-slide image-up/text-down split in
+portrait; page transitions keep the toggle and footer controls in place. Both restore original styles on destruction, settle pending
+completion promises, and handle reduced motion. Callers own dialogs and navigation,
+not animation details. Simple hover effects and viewport-relative layout stay in CSS;
+separate menu offsets leave viewport-relative layout independent. In portrait, the
+image slot stays `50svh`; an absolutely positioned picture/image frame inside it
+resizes to `50svh + 100dvh - 100svh` over 300ms, synchronized with text translation.
+The image fills that changing frame with `object-fit: cover`, so its sizing/crop
+really updates rather than revealing a clipped, fixed-size image. Layout containment
+keeps the frame's resizing out of surrounding flow; the slot and margins do not animate.
+Portrait sections stay `100svh`, text panels stay `50svh`, and the beige gap stays
+`100lvh - 100svh`. Copy must fit these fixed boxes; oversized-content expansion is
+not supported. There is no toolbar-dependent scroll margin to change snap geometry. See
+[the shared GSAP decision](docs/adr/0004-shared-gsap-motion.md).
+Native scrolling replaces fullpage.js. The menu uses a native modal dialog with
+keyboard/focus management; contact/legal destinations are ordinary pages, not overlays.
+Reduced-motion and no-JavaScript paths are covered by browser tests.
 
 All four inventoried video placements share the Video.js 10 player using compatible
 `@videojs/html` and `@videojs/hlsjs-video` packages pinned to 10.0.1, not the older

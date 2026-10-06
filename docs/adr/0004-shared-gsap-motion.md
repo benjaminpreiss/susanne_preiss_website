@@ -1,0 +1,3 @@
+# Keep coordinated GSAP timelines in one shared motion module
+
+After trying state-driven CSS and discussing the extra completion/interruption coordination it required, the owner explicitly chose the simplest human-readable solution using GSAP, superseding [ADR 0003](0003-state-driven-css-motion.md). Keep menu and page choreography in `src/interactions/motion.ts`, using GSAP reversal and context cleanup rather than a replacement animation engine; callers retain dialog, routing, focus and scroll-lock responsibilities. Simple hover effects and viewport layout remain CSS, with independent menu offsets so GSAP does not absorb the intentional dynamic-viewport translation into its transform cache.

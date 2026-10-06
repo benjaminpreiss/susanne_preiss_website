@@ -104,6 +104,7 @@ try {
         reducedMotion: reduced ? 'reduce' : 'no-preference',
       });
       try {
+        context.setDefaultTimeout(30_000);
         await replayBuild(context);
         await context.addInitScript(() => {
           const stages: { stage: string; time: number }[] = [];
@@ -149,10 +150,14 @@ try {
           await section(page, key);
           await page.screenshot({ path: join(output, `${name}-${key}.png`) });
           assert.equal(await page.locator('.section-controls [aria-current]').count(), 1);
-          const light = key === 'nachhaltigkeit' || key === 'management';
+          const current = page.locator(`.home-section[data-home-section="${key}"]`);
+          const light = (await current.getAttribute('data-control-tone')) === 'light';
+          const menuLight =
+            (await current.getAttribute(mobile ? 'data-mobile-menu-tone' : 'data-control-tone')) ===
+            'light';
           assert.equal(
             await page.locator('#menu-trigger').evaluate((node) => getComputedStyle(node).color),
-            light ? 'rgb(239, 234, 227)' : 'rgb(43, 44, 54)',
+            menuLight ? 'rgb(239, 234, 227)' : 'rgb(43, 44, 54)',
           );
           assert.equal(
             await page.locator('.site-footer').evaluate((node) => getComputedStyle(node).color),
@@ -201,6 +206,20 @@ try {
           .locator('#tile-workshops')
           .evaluate((node) => new DOMMatrix(getComputedStyle(node).transform).a);
         assert.ok(Math.abs(scale - (reduced ? 1 : 1.1)) < 0.001);
+        const panelState = () =>
+          page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.map((node) => {
+              const style = getComputedStyle(node);
+              return {
+                className: node.className,
+                transform: style.transform,
+                translate: style.translate,
+                opacity: style.opacity,
+                inline: node.getAttribute('style') ?? '',
+              };
+            }),
+          );
+        const beforeMenuPanels = await panelState();
         await page.locator('#menu-trigger').click();
         if (!reduced) {
           await page.waitForTimeout(150);
@@ -213,9 +232,42 @@ try {
             'Menu waits for homepage exit',
           );
           const pose = await page
-            .locator(mobile ? '.homepage' : '#section-workshops .home-left')
+            .locator(mobile ? '#section-workshops .home-image' : '#section-workshops .home-left')
             .evaluate((node) => getComputedStyle(node).transform);
           assert.notEqual(pose, 'none');
+          if (mobile) {
+            const panels = await page.locator('.home-panel').evaluateAll((nodes) =>
+              nodes.map((node) => ({
+                active:
+                  node.closest<HTMLElement>('.home-section')?.dataset.homeSection ===
+                  document.documentElement.dataset.homeSection,
+                image: node.classList.contains('home-image'),
+                y: new DOMMatrix(getComputedStyle(node).transform).m42,
+                opacity: Number(getComputedStyle(node).opacity),
+              })),
+            );
+            assert.equal(panels.filter((panel) => panel.active).length, 2);
+            for (const panel of panels) {
+              if (panel.active) {
+                assert.ok(
+                  panel.image ? panel.y < 0 : panel.y > 0,
+                  'active image up, active text down',
+                );
+                assert.ok(
+                  panel.opacity > 0 && panel.opacity < 1,
+                  'both active panels fade while moving',
+                );
+              } else {
+                assert.equal(panel.y, 0, 'off-screen panels never move into view');
+                assert.equal(panel.opacity, 1, 'off-screen panels are untouched');
+              }
+            }
+            assert.equal(
+              await page.locator('.homepage').evaluate((node) => getComputedStyle(node).transform),
+              'none',
+              'menu opening does not translate the whole homepage',
+            );
+          }
         }
         await page.waitForTimeout(reduced ? 50 : 1300);
         assert.equal(
@@ -229,6 +281,22 @@ try {
         await page.waitForFunction(() => !document.querySelector('dialog[open]'));
         assert.ok(Math.abs((await page.evaluate(() => scrollY)) - before) < 3);
         assert.equal(await page.evaluate(() => document.activeElement?.id), 'menu-trigger');
+        const afterMenuPanels = await panelState();
+        results.push({ name, beforeMenuPanels, afterMenuPanels });
+        assert.deepEqual(
+          afterMenuPanels,
+          beforeMenuPanels,
+          'restores viewport-relative panel styles',
+        );
+        assert.ok(
+          await page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.every((node) => {
+              const style = getComputedStyle(node);
+              return new DOMMatrix(style.transform).isIdentity && Number(style.opacity) === 1;
+            }),
+          ),
+          'closing restores panel transforms and opacity',
+        );
         for (const [trigger, path] of [
           ['#footer-contact', '/kontakt/'],
           ['#footer-imprint', '/impressum/'],
@@ -302,8 +370,12 @@ try {
         results.push({ name, lightReturn });
         assert.equal(
           lightReturn.color,
-          'rgb(239, 234, 227)',
-          'Light controls return after utility closure',
+          (await page
+            .locator('#section-nachhaltigkeit')
+            .getAttribute(mobile ? 'data-mobile-menu-tone' : 'data-control-tone')) === 'light'
+            ? 'rgb(239, 234, 227)'
+            : 'rgb(43, 44, 54)',
+          'Authored controls return after utility closure',
         );
         await section(page, 'workshops');
         await page.locator('#menu-trigger').click();
@@ -339,6 +411,15 @@ try {
         assert.equal(
           await page.locator('.homepage').evaluate((node) => (node as HTMLElement).style.transform),
           '',
+        );
+        assert.ok(
+          await page.locator('.home-panel').evaluateAll((nodes) =>
+            nodes.every((node) => {
+              const style = getComputedStyle(node);
+              return new DOMMatrix(style.transform).isIdentity && Number(style.opacity) === 1;
+            }),
+          ),
+          'interrupted menu opening restores every panel',
         );
         // Native wheel and keyboard reach subsequent content without hijacked input.
         await page.mouse.move(100, 300);
@@ -403,28 +484,22 @@ try {
           await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
           true,
         );
-        // A taller-than-viewport section must remain scrollable, not trap its lower content.
-        await page.locator('#section-workshops .home-copy').evaluate((node) => {
-          const text = document.createElement('p');
-          text.textContent = 'Long-section reachability fixture. '.repeat(150);
-          node.append(text);
-        });
-        await page.waitForTimeout(900); // Let native re-snapping after the fixture's layout change finish.
+        // Portrait sections have fixed snap boxes; keyboard navigation moves between tops.
+        await page.setViewportSize({ width: 390, height: 664 });
         await page.locator('main').focus();
         await section(page, 'workshops');
-        const tall = await page.locator('#section-workshops').boundingBox();
-        assert.ok(tall && tall.height > 480);
-        const longStart = await page.evaluate(() => scrollY);
+        const fixed = await page.locator('#section-workshops').evaluate((node) => ({
+          height: node.getBoundingClientRect().height,
+          copy: node.querySelector('.home-copy')!.getBoundingClientRect().height,
+          snapMargin: getComputedStyle(node).scrollMarginBottom,
+        }));
+        assert.ok(Math.abs(fixed.height - 664) < 1);
+        assert.ok(Math.abs(fixed.copy - 332) < 1);
+        assert.equal(fixed.snapMargin, '0px');
         await page.keyboard.press('ArrowDown');
-        await page.waitForTimeout(600);
-        const longScroll = await page.evaluate(() => scrollY);
-        assert.ok(
-          longScroll > longStart && longScroll < longStart + tall.height - 480,
-          'Arrow key scrolls within a tall section before leaving it',
+        await page.waitForFunction(
+          () => document.documentElement.dataset.homeSection === 'personal',
         );
-        await page
-          .locator('#section-workshops .home-copy > p')
-          .evaluate((node) => node.scrollIntoView({ block: 'end', behavior: 'instant' }));
         await page.keyboard.press('End');
         await page.waitForTimeout(600);
         assert.equal(

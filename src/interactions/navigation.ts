@@ -1,4 +1,11 @@
-import { motionSteps, pageMotion, type PageKind } from './page-motion';
+/**
+ * Document-lifetime integration with Astro ClientRouter. Keeps ordinary links,
+ * history and focus semantics while awaiting the shared motion module's timelines.
+ * motion.ts owns choreography; this module owns the points where loading, swapping
+ * and interaction cleanup must agree.
+ * @module
+ */
+import { createPageMotion } from './motion';
 import { pageInteractions } from './page';
 import { mountHomepage } from './homepage';
 
@@ -6,6 +13,7 @@ const installed = new WeakSet<Document>();
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 type InputModality = 'pointer' | 'keyboard';
+/** Preserve whether restored focus should show keyboard affordances after a route swap. */
 function setInputModality(document: Document, modality: InputModality) {
   document.documentElement.dataset.inputModality = modality;
   try {
@@ -14,6 +22,7 @@ function setInputModality(document: Document, modality: InputModality) {
     /* History state remains the storage-disabled fallback. */
   }
 }
+/** Prefer session continuity, but remain usable when browser storage is unavailable. */
 function restoreInputModality(document: Document, fallback?: unknown) {
   let modality = fallback;
   try {
@@ -24,6 +33,11 @@ function restoreInputModality(document: Document, fallback?: unknown) {
   if (modality === 'pointer' || modality === 'keyboard')
     document.documentElement.dataset.inputModality = modality;
 }
+/**
+ * Return focus to the control saved for the current history entry without moving scroll.
+ * Do not steal focus if the user or another island already selected a different control.
+ * A late-hydrating navigation island may retry this once its opener becomes enabled.
+ */
 export function restoreHistoryFocus(document: Document) {
   const state: unknown = document.defaultView?.history.state;
   if (!record(state) || typeof state.siteFocusId !== 'string') return;
@@ -41,13 +55,14 @@ export function restoreHistoryFocus(document: Document) {
     element.focus({ preventScroll: true });
   }
 }
+type PageKind = 'content' | 'utility' | 'home';
 const kind = (document: Document): PageKind =>
   document.documentElement.dataset.pageKind === 'utility'
     ? 'utility'
     : document.documentElement.dataset.pageKind === 'home'
       ? 'home'
       : 'content';
-type Motion = ReturnType<typeof pageMotion>;
+/** One navigation attempt; its identity prevents late async work from mutating a newer route. */
 interface Journey {
   id: number;
   from: string;
@@ -57,20 +72,35 @@ interface Journey {
   fromIndex: number | undefined;
   navigationType: string;
   signal: AbortSignal;
-  exit?: Motion;
-  entry?: Motion;
+  // Exit and entry run sequentially; each stage is destroyed before replacing it.
+  motion?: ReturnType<typeof createPageMotion>;
   swapped: boolean;
   snapshotsFinished?: Promise<unknown>;
   cancel: () => void;
 }
 
-/** Install once for the document lifetime; Astro replaces bodies, not this controller. */
+/**
+ * Install once per document; repeated calls do not add duplicate route listeners.
+ *
+ * Lifecycle order:
+ * - before-preparation: finish loading the destination before hiding the current page;
+ * - before-swap: suppress snapshot animations and unmount body-scoped enhancements;
+ * - after-swap: restore section presentation and establish the entrance pose;
+ * - page-load: await entrance completion, release route state and restore focus.
+ *
+ * JavaScript is needed at these lifecycle boundaries, not to render animation frames.
+ * The homepage itself is remounted per body; document-level listeners persist until
+ * the document is discarded. pagehide cancels any unfinished navigation.
+ *
+ * @param document Live document managed by Astro ClientRouter.
+ */
 export function installPageNavigation(document: Document) {
   const view = document.defaultView;
   if (!view || installed.has(document)) return;
   installed.add(document);
   let homepageBody = document.body;
   let unmountHomepage = mountHomepage(document);
+  /** Rebind body-owned listeners only after replacement, never during the same body's entrance. */
   function refreshHomepage() {
     if (homepageBody === document.body) return;
     unmountHomepage();
@@ -80,6 +110,7 @@ export function installPageNavigation(document: Document) {
   document.addEventListener('astro:page-load', refreshHomepage);
   const state = (): Record<string, unknown> =>
     record(view.history.state) ? view.history.state : {};
+  // Restrict our history/focus bookkeeping to published same-origin destinations.
   const allowed = (href: string) => {
     try {
       const url = new URL(href, view.location.href);
@@ -130,6 +161,8 @@ export function installPageNavigation(document: Document) {
           { ...state(), siteFocusId: focusId, siteFocusModality: modality },
           '',
         );
+      // Use Back only for the immediately preceding, known utility opener.
+      // A direct load or unrelated history entry must retain the ordinary return href.
       const back = state().siteReturn;
       if (
         link.hasAttribute('data-return') &&
@@ -146,8 +179,8 @@ export function installPageNavigation(document: Document) {
     true,
   );
 
+  // Diagnostic event metadata only; the motion module implements reduced-motion playback.
   const reduced = view.matchMedia('(prefers-reduced-motion: reduce)');
-  const mobile = view.matchMedia('(pointer: coarse)');
   let active: Journey | undefined;
   let sequence = 0;
   const emit = (journey: Journey, stage: string) =>
@@ -178,9 +211,10 @@ export function installPageNavigation(document: Document) {
       signal: event.signal,
       swapped: false,
       cancel() {
-        journey.exit?.restore();
-        journey.entry?.restore();
+        journey.motion?.destroy();
+        journey.motion = undefined;
         event.signal.removeEventListener('abort', journey.cancel);
+        // A superseded loader can finish late; it must not clear the new journey's route state.
         if (active !== journey) return;
         document.documentElement.removeAttribute('data-route-phase');
         document.dispatchEvent(new Event('site:page-cancel'));
@@ -204,22 +238,9 @@ export function installPageNavigation(document: Document) {
         document.dispatchEvent(new Event('site:page-departure'));
         const menuOpen = !!document.querySelector('dialog[open]');
         document.documentElement.dataset.routePhase = 'leaving';
-        journey.exit = pageMotion(
-          document,
-          motionSteps(
-            journey.fromKind,
-            'exit',
-            journey.fromKind === 'home'
-              ? view.matchMedia('(max-aspect-ratio: 1/1)').matches
-              : mobile.matches,
-            menuOpen,
-          ),
-          false,
-          reduced.matches,
-        );
+        journey.motion = createPageMotion(document, { entering: false, menuOpen });
         emit(journey, 'exit-start');
-        journey.exit.play();
-        await journey.exit.finished;
+        await journey.motion.run();
         if (event.signal.aborted || active !== journey) return;
         emit(journey, 'exit-end');
         // Keep the completed exit hidden while menu teardown restores its scroll lock.
@@ -243,6 +264,8 @@ export function installPageNavigation(document: Document) {
     const mode = document.documentElement.dataset.inputModality;
     if (mode) event.newDocument.documentElement.dataset.inputModality = mode;
     if (journey.navigationType === 'traverse') event.newDocument.body.dataset.restoreFocus = 'true';
+    journey.motion?.destroy();
+    journey.motion = undefined;
     unmountHomepage();
     pageInteractions(document).setSection(null);
   });
@@ -250,7 +273,6 @@ export function installPageNavigation(document: Document) {
     const journey = active;
     if (!journey) return;
     journey.swapped = true;
-    journey.exit?.restore();
     const currentIndex = state().index;
     if (
       kind(document) === 'utility' &&
@@ -270,20 +292,10 @@ export function installPageNavigation(document: Document) {
     // do not remount on page-load while those entry transforms are active.
     refreshHomepage();
     // Set entry poses synchronously, before the replacement body can paint.
-    journey.entry = pageMotion(
-      document,
-      motionSteps(
-        kind(document),
-        'entry',
-        kind(document) === 'home'
-          ? view.matchMedia('(max-aspect-ratio: 1/1)').matches
-          : mobile.matches,
-        false,
-        journey.fromKind === 'utility',
-      ),
-      true,
-      reduced.matches,
-    );
+    journey.motion = createPageMotion(document, {
+      entering: true,
+      returning: journey.fromKind === 'utility',
+    });
   });
   document.addEventListener('astro:page-load', () => {
     const journey = active;
@@ -292,13 +304,14 @@ export function installPageNavigation(document: Document) {
       return;
     }
     void (async () => {
+      // Even skipped View Transitions have a lifecycle; avoid competing with its final cleanup.
       await journey.snapshotsFinished;
       if (active !== journey || journey.signal.aborted) return;
       emit(journey, 'entry-start');
-      journey.entry?.play();
-      await journey.entry?.finished;
+      await journey.motion?.run();
       if (active !== journey || journey.signal.aborted) return;
-      journey.entry?.restore();
+      journey.motion?.destroy();
+      journey.motion = undefined;
       document.documentElement.removeAttribute('data-route-phase');
       if (journey.navigationType === 'traverse' && typeof state().siteFocusId === 'string')
         restoreHistoryFocus(document);
@@ -307,12 +320,6 @@ export function installPageNavigation(document: Document) {
       active = undefined;
       emit(journey, 'entry-end');
     })();
-  });
-  reduced.addEventListener('change', () => {
-    if (reduced.matches) {
-      active?.exit?.finish();
-      active?.entry?.finish();
-    }
   });
   view.addEventListener('pagehide', () => active?.cancel());
   view.addEventListener('pageshow', (event) => {
