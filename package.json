@@ -53,7 +53,7 @@
     "ignore": "7.0.12",
     "lint-staged": "16.2.7",
     "oxfmt": "0.71.0",
-    "oxlint": "1.86.0",
+    "oxlint": "1.87.0",
     "playwright": "1.63.0",
     "prettier": "3.9.9",
     "prettier-plugin-astro": "1.1.0",
