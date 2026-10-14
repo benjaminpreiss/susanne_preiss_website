@@ -46,7 +46,7 @@
     "@astrojs/check": "0.9.10",
     "@sveltejs/mcp": "0.1.26",
     "@types/css-tree": "3.2.0",
-    "@types/node": "24.10.1",
+    "@types/node": "26.6.4",
     "@videojs/cli": "10.0.1",
     "cheerio": "1.2.0",
     "husky": "9.1.7",
